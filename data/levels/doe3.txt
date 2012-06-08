@@ -1,31 +1,34 @@
 entity
 {
-	model = doe
+	type = world
+	model_name = doe
 	mobile = 0
-	colour = <0, 0, 127>
+	colour = <0, 0, 255>
 }
 entity
 {
-	model = ufo
-	colour = <127, 127, 0>
+	type = player
+	model_name = ufo
+	colour = <255, 255, 0>
 	mobile = 1
 	position = <300, 50>
 	velocity = <1, 2>
 }
 entity
 {
-	model = ufo
-	colour = <127, 127, 0>
+	type = player
+	model_name = ufo
+	colour = <255, 0, 255>
 	mobile = 1
 	position = <350, 250>
 	velocity = <-2, -1>
 }
 entity
 {
-	model = ufo
-	colour = <127, 127, 0>
+	type = player
+	model_name = ufo
+	colour = <0, 255, 255>
 	mobile = 1
 	position = <450, 150>
 	velocity = <-1, -1>
 }
-

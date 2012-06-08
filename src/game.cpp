@@ -2,10 +2,15 @@
 // Copyright (C) 2003 Marc A. Lepage.
 
 
+#pragma warning(disable: 4786)
+
+
 #include "game.h"
 
+#include <algorithm>
 #include <cmath>
 #include "console.h"
+#include "entity_type.h"
 #include "resourcex.h"
 #include "screen.h"
 #include "world.h"
@@ -25,6 +30,23 @@ Game::m_cpEntity;
 
 Entity*
 Game::m_pActiveEntity = 0;
+
+
+/*******************************************************************************
+	TODO Destroy entities. Right now this leaks. Also, I need to destroy
+	anonymous models when I destroy their entity.
+*******************************************************************************/
+void
+Game::destroyEntity(
+	Entity& entity)
+{
+	World::unlinkEntity(entity);
+
+	// TODO It is dangerous to change the vector while iterating through it
+	// (e.g. destroying entities while processing them). Fix this.
+
+	m_cpEntity.erase(std::find(m_cpEntity.begin(), m_cpEntity.end(), &entity));
+}
 
 
 /*******************************************************************************
@@ -949,6 +971,8 @@ Game::physics(
 	scalar fTimeCompleted = 0;
 	scalar fTimeRemaining = 1;
 
+	int nCollisionCount = 0;
+
 	while (fTimeRemaining)
 	{
 		World::unlinkEntity(entity);
@@ -976,7 +1000,24 @@ Game::physics(
 				collision.m_fTime,
 				kfCurrentTime,
 				entity.getIdentifier());
-			exit(1);
+			++entity.m_nInfiniteStuckCount;
+			if (1 < entity.m_nInfiniteStuckCount)
+			{
+				Console::print(
+					_T("Too many infinite stuck: f=%d e1=%d stuck=%d\n"),
+					Game::getFrame(),
+					entity.getIdentifier(),
+					entity.m_nInfiniteStuckCount);
+				exit(1);
+			}
+			else
+			{
+				fTimeRemaining = 0;
+			}
+		}
+		else
+		{
+			entity.m_nInfiniteStuckCount = 0;
 		}
 
 		// Move entity.
@@ -994,7 +1035,33 @@ Game::physics(
 				entity.getIdentifier(),
 				collision.m_pEntity->getIdentifier());
 
-			if (collision.m_pEntity->isMobile())
+			++nCollisionCount;
+			if (10 < nCollisionCount)
+			{
+				// Too many collisions. Just bail.
+				fTimeRemaining = 0;
+				continue;
+			}
+
+			// TEMP Treat path entities specially until I do them properly.
+			if (entity.getType().getName() == tstring(_T("path")))
+			{
+				// Just stop moving.
+				++entity.m_nPathStuckCount;
+				fTimeRemaining = 0;
+				// Bump the other entity by your velocity.
+				if (collision.m_pEntity->getType().getName() ==
+					tstring(_T("player")))
+				{
+					scalar fOtherEntitySpeed =
+						sqrt(collision.m_pEntity->getVelocity() %
+							collision.m_pEntity->getVelocity());
+					collision.m_pEntity->getVelocity() +=
+						entity.getVelocity();
+				}
+			}
+			else if (collision.m_pEntity->isMobile() &&
+				collision.m_pEntity->getType().getName() != tstring(_T("path")))
 			{
 				const bool bStuck =
 					resolveCollision(collision, entity, *collision.m_pEntity);
@@ -1007,6 +1074,8 @@ Game::physics(
 						entity.getVelocity() * kfCurrentTime;
 					fTimeRemaining = 0;
 				}
+				// Path stuff.
+				entity.m_nPathStuckCount = 0;
 			}
 			else
 			{
@@ -1042,6 +1111,17 @@ Game::physics(
 			if (getActiveEntity() == &entity)
 			{
 				setActiveEntity(0);
+			}
+
+			// If the other entity's type was block, destroy it.
+			if (collision.m_pEntity->getType().getName() ==
+				tstring(_T("block")) &&
+				entity.getType().getName() == tstring(_T("player")))
+			{
+				Console::print(
+					_T("Response: e2=%d destroyed\n"),
+					entity.getIdentifier());
+				Game::destroyEntity(*collision.m_pEntity);
 			}
 		}
 
@@ -1099,6 +1179,58 @@ void
 Game::runEntity(
 	Entity& entity)
 {
+	// Hack here to limit velocity of thrown entity. Also hack in friction.
+	{
+		if (&entity != Game::getActiveEntity() &&
+			entity.getType().getName() == tstring(_T("player")))
+		{
+			const scalar kfSpeedLimit = 16;
+			scalar fSpeed =
+				sqrt(entity.getVelocity() % entity.getVelocity());
+			if (kfSpeedLimit < fSpeed)
+			{
+				entity.getVelocity() *= kfSpeedLimit / fSpeed;
+			}
+			// Friction.
+			entity.getVelocity() *= 0.99f;
+			scalar fNewSpeed =
+				sqrt(entity.getVelocity() % entity.getVelocity());
+			if (fNewSpeed < 0.1)
+			{
+				entity.getVelocity() = Vec2(0, 0);
+			}
+		}
+	}
+
+	// Hack here to add simple path support.
+	if (entity.getType().getName() == tstring(_T("path")))
+	{
+		Vec2 vCurrentPoint =
+			entity.m_cvPathPoint[entity.m_nPathCurrent];
+		const scalar kfDistanceToCurrentPoint =
+			sqrt((vCurrentPoint - entity.getOrigin()) %
+				(vCurrentPoint - entity.getOrigin()));
+		if (kfDistanceToCurrentPoint <= entity.m_fPathSpeed ||
+			1 < entity.m_nPathStuckCount)
+		{
+			// We're there, go to next path point.
+			++entity.m_nPathCurrent;
+			if (entity.m_cvPathPoint.size() <= entity.m_nPathCurrent)
+			{
+				entity.m_nPathCurrent = 0;
+			}
+			vCurrentPoint =
+				entity.m_cvPathPoint[entity.m_nPathCurrent];
+			entity.m_nPathStuckCount = 0;
+		}
+		Vec2 vVectorToPoint =
+			vCurrentPoint - entity.getOrigin();
+		scalar fDistanceToPoint =
+			sqrt(vVectorToPoint % vVectorToPoint);
+		entity.getVelocity() =
+			vVectorToPoint / fDistanceToPoint * entity.m_fPathSpeed;
+	}
+
 	physics(entity);
 
 	// TODO runThink
@@ -1136,7 +1268,6 @@ Game::setActiveEntity(
 
 
 /*******************************************************************************
-	TODO right now this leaks.
 *******************************************************************************/
 Entity&
 Game::spawnEntity()

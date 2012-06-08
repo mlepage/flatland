@@ -1,13 +1,15 @@
 entity
 {
-	model = demo
+	type = world
+	model_name = demo
 	mobile = 0
-	colour = <0, 0, 127>
+	colour = <0, 0, 255>
 }
 entity
 {
-	model = ufo
-	colour = <127, 0, 0>
+	type = player
+	model_name = ufo
+	colour = <255, 255, 0>
 	mobile = 1
 	position = <100, 100>
 	velocity = <-1, -1>

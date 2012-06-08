@@ -10,6 +10,38 @@ Windows executables are provided for each milestone release. Instructions are in
 Release History
 ===============
 
+Milestone 3 - Aug 30, 2003
+--------------------------
+
+The third milestone is the "gameplay" release.
+
+The first big enhancement is support for entity types. There are a few predefined entity types:
+
+world - this should be the first entity.
+monster - uncontrollable entities.
+player - controllable entities.
+control - a non-solid area for controlling player entities.
+block - these are destroyed when player entities hit them.
+path - these move around on a path.
+
+The new "breakout-1" level illustrates all of these entity types except monster.
+
+In the data files, support has been added for anonymous models. These are models that are defined right in the entity. They will not have an image, unless you also declare an image_name (and this must be after the model). Another addition is the attributes to support path entities. This is a bit of a kluge right now, setting a path_speed and a number of path_point attributes.
+
+A new configuration variable has been added to set stylus_easy_mode. You can disable it for the older (harder) behaviour.
+
+Top speed of thrown player entities is now limited. Also, friction will slow them down after a while. If you come to a dead stop, and a path entity doesn't bump you, simply exit and restart.
+
+There have been some tweaks to the collision response, mostly because of the complication of path entities. The app should now gracefully exit if an infinite case arises, complaining of "too many infinite stuck" (exact wording may vary).
+
+The controls remain:
+
+stylus - control player entity in control area.
+arrows - scroll view.
+1 - pause/unpause.
+2 - single step frame.
+3 - exit.
+
 Milestone 2 - Aug 23, 2003
 --------------------------
 

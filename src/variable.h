@@ -41,6 +41,7 @@ public:
 	DECL_VAR(render_entity_image);
 	DECL_VAR(render_entity_velocity);
 	DECL_VAR(render_model_bounds);
+	DECL_VAR(stylus_easy);
 #undef DECL_VAR
 
 

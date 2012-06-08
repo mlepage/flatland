@@ -2,6 +2,9 @@
 // Copyright (C) 2003 Marc A. Lepage.
 
 
+#pragma warning(disable: 4786)
+
+
 #include "render.h"
 
 #include "game.h"
@@ -362,6 +365,8 @@ if (Variable::render_entity_image.getFloatValue())
 	// Entity image.
 	CGapiSurface* pSurface =
 		const_cast<CGapiSurface*>(&kEntity.getModel().getImage());
+	if (pSurface)
+	{
 	// Screen origin and size.
 	Vec2 vScreenOrigin = View::getScreenView().getMin();
 	Vec2 vScreenViewSize =
@@ -402,6 +407,7 @@ if (Variable::render_entity_image.getFloatValue())
 		&srcRect,
 		GDBLTFAST_KEYSRC,
 		NULL);
+	}
 }
 
 		COLORREF dwColor =

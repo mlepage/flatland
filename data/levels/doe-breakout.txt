@@ -1,0 +1,41 @@
+entity
+{
+	type = world
+	model_name = doe
+	mobile = 0
+	colour = <0, 0, 255>
+}
+entity
+{
+	type = control
+	model
+	{
+		brush
+		{
+			<466, 171>
+			<379, 192>
+			<365, 118>
+			<465, 89>
+		}
+	}
+	colour = <0, 255, 0>
+	mobile = 0
+}
+entity
+{
+	type = player
+	model_name = ufo
+	colour = <255, 255, 0>
+	mobile = 1
+	position = <300, 50>
+	velocity = <2, 3>
+}
+entity
+{
+	type = monster
+	model_name = badufo
+	colour = <255, 0, 0>
+	mobile = 1
+	position = <350, 250>
+	velocity = <-3, -2>
+}

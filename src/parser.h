@@ -41,7 +41,7 @@ public:
 		Model& model);
 
 	bool
-	testLine(
+	queryLine(
 		const tstring& ksLine);
 
 

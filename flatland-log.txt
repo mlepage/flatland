@@ -1,15 +1,26 @@
 Console initialized.
 Performing automated tests.
-shell: comment: set
-shell: comment: set
-shell: comment: set
-shell: comment: set
-shell: comment: set
+shell: setting variable: first_level breakout-1
+shell: setting variable: render_brush_bounds 0
+shell: setting variable: render_brush_outline 0
+shell: setting variable: render_entity_bounds 0
+shell: setting variable: render_entity_identifier 0
+shell: setting variable: render_entity_velocity 0
 shell: setting variable: render_entity_image 1
-shell: comment: set
-shell: setting variable: first_level doe3
+shell: setting variable: render_model_bounds 0
+shell: setting variable: stylus_easy 1
 Creating application.
 Flatland initialized.
 Loading level
-Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\doe.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\breakout-1.png
 Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\ufo.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\diamond.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\diamond.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\diamond.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\diamond.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\diamond.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\diamond.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\diamond.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\diamond.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\obstacle.png
+Resource loaded: C:\Program Files\GapiDraw204\samples\Flatland\xp\Debug\\data\images\obstacle.png

@@ -89,15 +89,12 @@ public:
 	enum
 	{
 		Parse = 1,
-		OpenFile
+		OpenFile,
+		EntityTypeNotFound
 	};
 
 
 public:
-
-	static
-	void
-	test();
 
 	static
 	jmp_buf m_aEnv[FLATLAND_EXCEPTION_MAX];

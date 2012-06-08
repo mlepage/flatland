@@ -20,6 +20,11 @@ class Game
 public:
 
 	static
+	void
+	destroyEntity(
+		Entity& entity);
+
+	static
 	Entity*
 	getActiveEntity();
 

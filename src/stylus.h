@@ -18,12 +18,20 @@ class Stylus
 public:
 
 	static
+	void
+	down();
+
+	static
 	const Vec2&
 	getAnchorPoint();
 
 	static
 	const Vec2&
 	getLeadPoint();
+
+	static
+	bool
+	isDown();
 
 	static
 	void
@@ -35,8 +43,14 @@ public:
 	setLeadPoint(
 		const Vec2& kvPoint);
 
+	static
+	void
+	up();
 
 private:
+
+	static
+	bool m_bDown;
 
 	static
 	Vec2 m_vAnchorPoint;

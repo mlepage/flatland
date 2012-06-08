@@ -2,6 +2,9 @@
 // Copyright (C) 2003 Marc A. Lepage.
 
 
+#pragma warning(disable: 4786)
+
+
 #include "resourcex.h"
 
 #include <cstdio>
@@ -133,7 +136,7 @@ Resourcex::loadLevel(
 
 	Parser parser(pFile);
 
-	while (parser.testLine(_T("entity")))
+	while (parser.queryLine(_T("entity")))
 	{
 		Entity& entity = Game::spawnEntity();
 		parser.parseEntity(entity);

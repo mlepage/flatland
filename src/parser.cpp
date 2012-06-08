@@ -2,10 +2,14 @@
 // Copyright (C) 2003 Marc A. Lepage.
 
 
+#pragma warning(disable: 4786)
+
+
 #include "parser.h"
 
 #include "brush.h"
 #include "entity.h"
+#include "entity_type.h"
 #include "exception.h"
 #include "matrix.h"
 #include "model.h"
@@ -31,14 +35,37 @@ Parser::Parser(
 void
 Parser::getLine()
 {
-	if (_fgetts(
-		&m_cnLookaheadBuffer[0],
-		m_cnLookaheadBuffer.size(),
-		m_kpFile) == NULL)
+	// Specialized comment handling here. If a line has leading non-whitespace
+	// character '#' it is ignored.
+
+	while (true)
 	{
-		if (!feof(m_kpFile))
+		if (_fgetts(
+			&m_cnLookaheadBuffer[0],
+			m_cnLookaheadBuffer.size(),
+			m_kpFile) == NULL)
+		{
+			if (feof(m_kpFile))
+			{
+				break;
+			}
+			else
+			{
+				THROW(Exception::Parse);
+			}
+		}
+
+		_TCHAR nChar;
+		if (_stscanf(
+			&m_cnLookaheadBuffer[0],
+			_T(" %c"),
+			&nChar) != 1)
 		{
 			THROW(Exception::Parse);
+		}
+		if (nChar != _T('#'))
+		{
+			break;
 		}
 	}
 }
@@ -53,7 +80,7 @@ void
 Parser::matchLine(
 	const tstring& ksLine)
 {
-	if (testLine(ksLine))
+	if (queryLine(ksLine))
 	{
 		getLine();
 	}
@@ -96,7 +123,7 @@ Parser::parseAttribute(
 {
 	if (_stscanf(
 		&m_cnLookaheadBuffer[0],
-		_T("%128s = %*s "),
+		_T(" %128s = %*s "),
 		&m_cnTestBuffer[0]) == 1)
 	{
 		sName = &m_cnTestBuffer[0];
@@ -131,7 +158,7 @@ Parser::parseAttribute(
 {
 	if (_stscanf(
 		&m_cnLookaheadBuffer[0],
-		_T(" %128s = < %f , %f >"),
+		_T(" %128s = < %f , %f > "),
 		&m_cnTestBuffer[0],
 		&v[0],
 		&v[1]) == 3)
@@ -155,7 +182,7 @@ Parser::parseAttribute(
 {
 	if (_stscanf(
 		&m_cnLookaheadBuffer[0],
-		_T(" %128s = < %f , %f , %f >"),
+		_T(" %128s = < %f , %f , %f > "),
 		&m_cnTestBuffer[0],
 		&v[0],
 		&v[1],
@@ -198,7 +225,7 @@ Parser::parseBrush(
 		brush.addVertex(v);
 	}
 
-	while (!testLine(_T("}")))
+	while (!queryLine(_T("}")))
 	{
 		Vec2 v;
 		parseVec2(v);
@@ -222,32 +249,65 @@ Parser::parseEntity(
 
 	while (true)
 	{
-		if (testLine(_T("colour")))
+		if (queryLine(_T("colour")))
 		{
 			Vec3 v;
 			parseAttribute(sAttributeName, v);
 			entity.getColour() = v;
 		}
-		else if (testLine(_T("position")))
+		else if (queryLine(_T("image_name")))
+		{
+			tstring s;
+			parseAttribute(sAttributeName, s);
+			CGapiSurface& image = Resourcex::loadImage(s.c_str());
+			entity.getModel().setImage(image);
+		}
+		else if (queryLine(_T("path_point")))
+		{
+			Vec2 v;
+			parseAttribute(sAttributeName, v);
+			entity.m_cvPathPoint.push_back(v);
+		}
+		else if (queryLine(_T("path_speed")))
+		{
+			float f;
+			parseAttribute(sAttributeName, f);
+			entity.m_fPathSpeed = f;
+			entity.m_nPathCurrent = 0;
+			entity.m_nPathStuckCount = 0;
+		}
+		else if (queryLine(_T("position")))
 		{
 			Vec2 v;
 			parseAttribute(sAttributeName, v);
 			entity.getOrigin() = v;
 		}
-		else if (testLine(_T("mobile")))
+		else if (queryLine(_T("mobile")))
 		{
 			float f;
 			parseAttribute(sAttributeName, f);
 			entity.setMobile(f != 0);
 		}
-		else if (testLine(_T("model")))
+		else if (queryLine(_T("model")))
+		{
+			Model& model = *new Model();
+			parseModel(model);
+			entity.setModel(&model);
+		}
+		else if (queryLine(_T("model_name")))
 		{
 			tstring s;
 			parseAttribute(sAttributeName, s);
 			Model& model = Resourcex::getModel(s);
 			entity.setModel(&model);
 		}
-		else if (testLine(_T("velocity")))
+		else if (queryLine(_T("type")))
+		{
+			tstring s;
+			parseAttribute(sAttributeName, s);
+			entity.setType(EntityType::find(s));
+		}
+		else if (queryLine(_T("velocity")))
 		{
 			Vec2 v;
 			parseAttribute(sAttributeName, v);
@@ -278,7 +338,7 @@ Parser::parseModel(
 		model.addBrush(brush);
 	}
 
-	while (testLine(_T("brush")))
+	while (queryLine(_T("brush")))
 	{
 		Brush brush;
 		parseBrush(brush);
@@ -297,7 +357,7 @@ Parser::parseVec2(
 {
 	if (_stscanf(
 		&m_cnLookaheadBuffer[0],
-		_T(" < %f , %f >"),
+		_T(" < %f , %f > "),
 		&v[0],
 		&v[1]) == 2)
 	{
@@ -311,12 +371,12 @@ Parser::parseVec2(
 
 
 /*******************************************************************************
-	Tests the line against the lookahead buffer to see if it matches.
+	Queries the line against the lookahead buffer to see if it matches.
 
 	Actually, only the first word in the line is matched in this implementation.
 *******************************************************************************/
 bool
-Parser::testLine(
+Parser::queryLine(
 	const tstring& ksLine)
 {
 	// TODO Eliminate test buffer hardcoded size. (See also above.)

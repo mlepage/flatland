@@ -2,6 +2,9 @@
 // Copyright (C) 2003 Marc A. Lepage.
 
 
+#pragma warning(disable: 4786)
+
+
 #include "variable.h"
 
 
@@ -19,6 +22,7 @@ Variable::m_variableDirectory;
 	DEF_VAR(render_entity_image, "0");
 	DEF_VAR(render_entity_velocity, "0");
 	DEF_VAR(render_model_bounds, "0");
+	DEF_VAR(stylus_easy, "0");
 #undef DEF_VAR
 
 
@@ -37,5 +41,6 @@ Variable::init()
 	REG_VAR(render_entity_image);
 	REG_VAR(render_entity_velocity);
 	REG_VAR(render_model_bounds);
+	REG_VAR(stylus_easy);
 #undef REG_VAR
 }

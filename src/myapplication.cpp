@@ -3,6 +3,10 @@
 #endif
 
 
+#pragma comment(lib, "gd204.lib")
+#pragma warning(disable: 4786)
+
+
 // If I don't include this here, it won't compile in VC++ 6.
 // Must be something in MyApplication.h?
 #include <vector>
@@ -11,6 +15,7 @@
 #include "resource.h"
 
 #include "console.h"
+#include "entity_type.h"
 #include "exception.h"
 #include "file.h"
 #include "game.h"
@@ -24,9 +29,6 @@
 #include "variable.h"
 #include "view.h"
 #include "world.h"
-
-
-#pragma comment(lib, "gd204.lib")
 
 
 void
@@ -66,6 +68,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPTSTR pCmdLine, int 
 	Console::init();
 	Render::init();
 	View::init();
+
+	EntityType::init();
 
 #ifdef FLATLAND_ENABLE_TEST
 	Console::print(_T("Performing automated tests.\n"));
@@ -154,6 +158,41 @@ HRESULT DrawFrameInfo(CGapiSurface& surface, DWORD dwY, const TCHAR* pText, COLO
 }
 
 
+setActiveEntity(const Vec2& kvPoint)
+{
+	Stylus::setLeadPoint(kvPoint);
+
+	std::vector<Entity*> cpEntity =
+		World::getEntitiesAtPoint(
+			dehomo(View::getTransformS2W() * homo(kvPoint)));
+
+	// Go through the entities. If we are in a control entity, and also a
+	// player entity, then make that entity the active entity.
+
+	Entity* pPlayerEntity = NULL;
+	bool bControlEntity = false;
+
+	for (int n = 0; n != cpEntity.size(); ++n)
+	{
+		// TODO use static variables to lookup entity type?
+		if (cpEntity[n]->getType().getName() == tstring(_T("control")))
+		{
+			bControlEntity = true;
+		}
+		else if (cpEntity[n]->getType().getName() == tstring(_T("player")))
+		{
+			pPlayerEntity = cpEntity[n];
+		}
+	}
+
+	if (bControlEntity && pPlayerEntity)
+	{
+		Game::setActiveEntity(pPlayerEntity);
+	}
+
+	return S_OK;
+}
+
 /*******************************************************************************
 	Analogous to Quake 2's Qcommon_Frame.
 *******************************************************************************/
@@ -174,6 +213,37 @@ CMyApplication::ProcessNextFrame(
 	backbuffer.SetClipper(NULL);
 #endif
 	Screen::setBackBuffer(&backbuffer);
+
+	// Try to set the active entity if in stylus easy mode.
+	if (Variable::stylus_easy.getFloatValue() &&
+		Stylus::isDown() &&
+		!Game::getActiveEntity())
+	{
+		setActiveEntity(Stylus::getLeadPoint());
+	}
+
+	// See if the active entity should be disabled.
+	if (Game::getActiveEntity())
+	{
+		std::vector<Entity*> cpEntity =
+			World::getEntitiesAtPoint(
+				dehomo(View::getTransformS2W() * homo(Stylus::getLeadPoint())));
+
+		bool bControlEntity = false;
+
+		for (int n = 0; n != cpEntity.size(); ++n)
+		{
+			// TODO use static variables to lookup entity type?
+			if (cpEntity[n]->getType().getName() == tstring(_T("control")))
+			{
+				bControlEntity = true;
+			}
+		}
+		if (!bControlEntity)
+		{
+			Game::setActiveEntity(0);
+		}
+	}
 
 	// Move the active entity via the stylus. This needs to be before runFrame
 	// so the active entity doesn't lag behind the stylus.
@@ -374,25 +444,21 @@ HRESULT CMyApplication::KeyUp(DWORD dwKey, GDKEYLIST& keylist)
 
 HRESULT CMyApplication::StylusDown(POINT p)
 {
+	Stylus::down();
+	
 	const Vec2 kvPoint(p.x, p.y);
 	Stylus::setAnchorPoint(kvPoint);
 	Stylus::setLeadPoint(kvPoint);
 
-	std::vector<Entity*> cpEntity =
-		World::getEntitiesAtPoint(
-			dehomo(View::getTransformS2W() * homo(kvPoint)));
-
-	if (!cpEntity.empty())
-	{
-		// TODO Check if it's the world? If it's immobile?
-		Game::setActiveEntity(cpEntity.back());
-	}
+	setActiveEntity(kvPoint);
 
 	return S_OK;
 }
 
 HRESULT CMyApplication::StylusUp(POINT p)
 {
+	Stylus::up();
+
 	const Vec2 kvPoint(p.x, p.y);
 
 	Game::setActiveEntity(0);

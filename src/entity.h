@@ -11,6 +11,9 @@
 #include "rect.h"
 
 
+class EntityType;
+
+
 /*******************************************************************************
 	Entities may or may not have models.
 
@@ -75,6 +78,9 @@ public:
 	const Mat3&
 	getTransformW2M() const;
 
+	const EntityType&
+	getType() const;
+
 	Vec2&
 	getVelocity();
 
@@ -120,10 +126,29 @@ public:
 	setTransformW2M(
 		const Mat3& m);
 
+	void
+	setType(
+		const EntityType& kEntityType);
+
+
+public:
+
+	// TEMP path stuff
+	int m_nPathStuckCount;
+	scalar m_fPathSpeed;
+	int m_nPathCurrent;
+	std::vector<Vec2> m_cvPathPoint;
+
+	int m_nInfiniteStuckCount;
+
+
 private:
 
 	// The identifier.
 	int m_nIdentifier;
+
+	// The type.
+	const EntityType* m_pkEntityType;
 
 	// The entity's model, if it has one.
 	Model* m_pModel;
@@ -171,6 +196,7 @@ private:
 *******************************************************************************/
 inline
 Entity::Entity() :
+	m_nInfiniteStuckCount(0),
 	m_nIdentifier(0),
 	m_pModel(0),
 	m_vColour(255, 255, 255),
@@ -327,6 +353,16 @@ Entity::getTransformW2M() const
 /*******************************************************************************
 *******************************************************************************/
 inline
+const EntityType&
+Entity::getType() const
+{
+	return *m_pkEntityType;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
 Vec2&
 Entity::getVelocity()
 {
@@ -453,6 +489,17 @@ Entity::setTransformW2M(
 	const Mat3& km)
 {
 	m_mTransformWorldToModel = km;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+void
+Entity::setType(
+	const EntityType& kEntityType)
+{
+	m_pkEntityType = &kEntityType;
 }
 
 

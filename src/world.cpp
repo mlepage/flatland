@@ -2,10 +2,14 @@
 // Copyright (C) 2003 Marc A. Lepage.
 
 
+#pragma warning(disable: 4786)
+
+
 #include "world.h"
 
 #include <cmath>
 #include <fstream> // for debugging
+#include "entity_type.h"
 #include "game.h"
 
 
@@ -260,26 +264,12 @@ World::traceEntity(
 	Entity& entity,
 	const Vec2& kvEnd)
 {
+	// TODO If this entity is non-solid, don't collide with anything.
+	// This is low priority, because typically non-solid entities aren't moving.
+
 	Collision collision;
 	collision.m_fTime = 1;
 	collision.m_vEndPosition = kvEnd;
-
-	// For debugging.
-	int nThisEntityIndex = 0;
-	for (; nThisEntityIndex != Game::getNumberOfEntities();
-		++nThisEntityIndex)
-	{
-		const Entity& kOtherEntity = Game::getEntity(nThisEntityIndex);
-
-		if (&entity == &kOtherEntity)
-		{
-			break;
-		}
-	}
-	if (nThisEntityIndex == 13)
-	{
-		int n = 0;
-	}
 
 	// The bounds of the entity at its end position (t=1), in world coordinates.
 	// TODO There is a bug here! We may not be moving for a whole timeslice
@@ -303,6 +293,12 @@ World::traceEntity(
 
 		if (&entity == &kOtherEntity)
 		{
+			continue;
+		}
+
+		if (!kOtherEntity.getType().isSolid())
+		{
+			// Don't collide with non-solid entities.
 			continue;
 		}
 
