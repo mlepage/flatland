@@ -9,6 +9,9 @@
 
 #include <cstdio>
 #include "console.h"
+#include "menu.h"
+#include "program_state.h"
+#include "render.h"
 #include "view.h"
 
 
@@ -74,6 +77,80 @@ Screen::drawConsole()
 			NULL,
 			0,
 			NULL);
+	}
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Screen::drawMenu()
+{
+	CGapiSurface& backBuffer = *getBackBuffer();
+
+	const Rect& krScreenView = View::getScreenView();
+
+	// Menu.
+	if (Menu::hasCurrentMenu())
+	{
+		for (int n = 0; n != Menu::getCurrentMenu().getNumberOfItems(); ++n)
+		{
+			const Menu::Item& kItem = Menu::getCurrentMenu().getItem(n);
+			const Rect krBounds = kItem.getBounds();
+			COLORREF dwColor =
+				n == Menu::getCurrentItem() ?
+					RGB(255, 0, 0) :
+					RGB(0, 0, 255);
+			Render::drawLine(
+				krBounds.getMin()[0],
+				krBounds.getMin()[1],
+				krBounds.getMax()[0],
+				krBounds.getMin()[1],
+				krScreenView.getMin()[0],
+				krScreenView.getMax()[0],
+				krScreenView.getMin()[1],
+				krScreenView.getMax()[1],
+				dwColor);
+			Render::drawLine(
+				krBounds.getMin()[0],
+				krBounds.getMax()[1],
+				krBounds.getMax()[0],
+				krBounds.getMax()[1],
+				krScreenView.getMin()[0],
+				krScreenView.getMax()[0],
+				krScreenView.getMin()[1],
+				krScreenView.getMax()[1],
+				dwColor);
+			Render::drawLine(
+				krBounds.getMin()[0],
+				krBounds.getMin()[1],
+				krBounds.getMin()[0],
+				krBounds.getMax()[1],
+				krScreenView.getMin()[0],
+				krScreenView.getMax()[0],
+				krScreenView.getMin()[1],
+				krScreenView.getMax()[1],
+				dwColor);
+			Render::drawLine(
+				krBounds.getMax()[0],
+				krBounds.getMin()[1],
+				krBounds.getMax()[0],
+				krBounds.getMax()[1],
+				krScreenView.getMin()[0],
+				krScreenView.getMax()[0],
+				krScreenView.getMin()[1],
+				krScreenView.getMax()[1],
+				dwColor);
+			Screen::getBackBuffer()->DrawText(
+				(krBounds.getMax()[0] + krBounds.getMin()[0]) / 2,
+				(krBounds.getMax()[1] + krBounds.getMin()[1]) / 2 - 2,
+				kItem.getName().c_str(),
+				Screen::getSystemFont(),
+				GDDRAWTEXT_CENTER,
+				NULL,
+				0,
+				NULL);
+		}
 	}
 }
 
@@ -150,12 +227,14 @@ Screen::setSystemFont(
 void
 Screen::updateScreen()
 {
-	clear();
+	if (&ProgramState::getCurrentState() == &ProgramState::game_running)
+	{
+		// TODO fix this clear so only what isn't drawn is cleared.
+		clear();
+		View::renderView();
+		drawConsole();
+		drawCenterText();
+	}
 
-	// Also draw menu, console, status, etc.
-
-	View::renderView();
-
-	drawConsole();
-	drawCenterText();
+	drawMenu();
 }

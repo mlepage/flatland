@@ -7,6 +7,7 @@
 
 #include "key.h"
 
+#include "game.h"
 #include "view.h"
 
 
@@ -49,26 +50,35 @@ Key::keyUp(
 void
 Key::processCommands()
 {
+	if (Game::isPaused())
+	{
+		return;
+	}
+
 	const int knViewMove = 10;
 
 	if (isKeyDown(m_knKeyUp))
 	{
 		View::setWorldViewOrigin(
 			View::getWorldView().getMin() + Vec2(0, knViewMove));
+		Game::setAutoscrollEnabled(false);
 	}
 	if (isKeyDown(m_knKeyDown))
 	{
 		View::setWorldViewOrigin(
 			View::getWorldView().getMin() + Vec2(0, -knViewMove));
+		Game::setAutoscrollEnabled(false);
 	}
 	if (isKeyDown(m_knKeyLeft))
 	{
 		View::setWorldViewOrigin(
 			View::getWorldView().getMin() + Vec2(-knViewMove, 0));
+		Game::setAutoscrollEnabled(false);
 	}
 	if (isKeyDown(m_knKeyRight))
 	{
 		View::setWorldViewOrigin(
 			View::getWorldView().getMin() + Vec2(knViewMove, 0));
+		Game::setAutoscrollEnabled(false);
 	}
 }

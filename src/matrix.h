@@ -6,11 +6,16 @@
 #define GUARD__MATRIX
 
 
+#include "fixed.h"
 #include "test.h"
 
 
 // The scalar type.
+#if 0
+typedef fixed scalar;
+#else
 typedef float scalar;
+#endif
 
 
 /*******************************************************************************

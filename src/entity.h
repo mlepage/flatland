@@ -144,12 +144,18 @@ public:
 
 public:
 
-	// TEMP path stuff
+	// Hacked in path support
 	int m_nPathStuckCount;
 	scalar m_fPathSpeed;
 	int m_nPathCurrent;
 	std::vector<Vec2> m_cvPathPoint;
 
+	// Hacked in force support
+	scalar m_fForceSpeed;
+	Vec2 m_vForcePoint;
+	int m_nForceFrame;
+
+	// Hacked in detection of infinite movement collision problems
 	int m_nInfiniteStuckCount;
 
 	// Hacked in animation support

@@ -60,7 +60,12 @@
 	FLT_EPSILON is enough for PC, but not for Pocket PC.
 *******************************************************************************/
 //#define FLATLAND_TOL_EDGE std::numeric_limits<scalar>::epsilon()
+#if 1
 #define FLATLAND_TOL_EDGE 1e-6f
+#else
+// For fixed point 16.16, 1e-4f is enough to pass unit tests on PC.
+#define FLATLAND_TOL_EDGE 1e-3f
+#endif
 
 
 /*******************************************************************************

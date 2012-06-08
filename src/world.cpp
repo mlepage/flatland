@@ -13,7 +13,12 @@
 #include "game.h"
 
 
+#if 1
 #define TOLERANCE 1.0e-5
+#else
+// For fixed point 16.16, what value?
+#define TOLERANCE 1.0e-4
+#endif
 
 
 /*******************************************************************************

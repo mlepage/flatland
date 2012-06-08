@@ -5,6 +5,7 @@
 
 #include "GapiApplication.h"
 
+
 //-----------------------------------------------------------------------------
 // Name: class CMyApplication
 // Desc: Main class to run this application. Most functionality is inherited
@@ -24,6 +25,11 @@ protected:
 
 // Implementation
 public:
+
+	static CMyApplication* m_pMyApplication;
+
+	CGapiTimer& getTimer() { return m_timer; };
+
 	virtual HRESULT InitInstance();
 	virtual HRESULT ExitInstance();
 	virtual HRESULT CreateSurfaces(CGapiDisplay& display, HINSTANCE hInstance);

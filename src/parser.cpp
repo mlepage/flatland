@@ -241,13 +241,18 @@ Parser::parseAttribute(
 	tstring& sName,
 	Vec2& v)
 {
+	float f0;
+	float f1;
+
 	if (_stscanf(
 		&m_cnLookaheadBuffer[0],
 		_T(" %128s = < %f , %f > "),
 		&m_cnTestBuffer[0],
-		&v[0],
-		&v[1]) == 3)
+		&f0,
+		&f1) == 3)
 	{
+		v[0] = f0;
+		v[1] = f1;
 		sName = &m_cnTestBuffer[0];
 		getLine();
 	}
@@ -265,14 +270,21 @@ Parser::parseAttribute(
 	tstring& sName,
 	Vec3& v)
 {
+	float f0;
+	float f1;
+	float f2;
+
 	if (_stscanf(
 		&m_cnLookaheadBuffer[0],
 		_T(" %128s = < %f , %f , %f > "),
 		&m_cnTestBuffer[0],
-		&v[0],
-		&v[1],
-		&v[2]) == 4)
+		&f0,
+		&f1,
+		&f2) == 4)
 	{
+		v[0] = f0;
+		v[1] = f1;
+		v[2] = f2;
 		sName = &m_cnTestBuffer[0];
 		getLine();
 	}
@@ -352,6 +364,18 @@ Parser::parseEntity(
 			Vec3 v;
 			parseAttribute(sAttributeName, v);
 			entity.getColour() = v;
+		}
+		else if (queryLine(_T("force_point")))
+		{
+			Vec2 v;
+			parseAttribute(sAttributeName, v);
+			entity.m_vForcePoint = v;
+		}
+		else if (queryLine(_T("force_speed")))
+		{
+			float f;
+			parseAttribute(sAttributeName, f);
+			entity.m_fForceSpeed = f;
 		}
 		else if (queryLine(_T("path_point")))
 		{
@@ -446,12 +470,17 @@ void
 Parser::parseVec2(
 	Vec2& v)
 {
+	float f0;
+	float f1;
+	
 	if (_stscanf(
 		&m_cnLookaheadBuffer[0],
 		_T(" < %f , %f > "),
-		&v[0],
-		&v[1]) == 2)
+		&f0,
+		&f1) == 2)
 	{
+		v[0] = f0;
+		v[1] = f1;
 		getLine();
 	}
 	else

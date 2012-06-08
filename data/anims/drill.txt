@@ -1,0 +1,45 @@
+anim
+{
+	image_name = drill
+	size = <71, 14>
+	frame
+	{
+		index = 0
+		count = 1
+	}
+	frame
+	{
+		index = 1
+		count = 1
+	}
+	frame
+	{
+		index = 2
+		count = 1
+	}
+	frame
+	{
+		index = 3
+		count = 1
+	}
+	frame
+	{
+		index = 4
+		count = 1
+	}
+	frame
+	{
+		index = 5
+		count = 1
+	}
+	frame
+	{
+		index = 6
+		count = 1
+	}
+	frame
+	{
+		index = 7
+		count = 1
+	}
+}

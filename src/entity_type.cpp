@@ -32,6 +32,13 @@ EntityType::init()
 		entityType.m_bSolid = false;
 	}
 	{
+		tstring sName(_T("force"));
+		EntityType& entityType = *new EntityType();
+		m_entityTypeDirectory.insert(sName, entityType);
+		entityType.m_sName = sName;
+		entityType.m_bSolid = false;
+	}
+	{
 		tstring sName(_T("path"));
 		EntityType& entityType = *new EntityType();
 		m_entityTypeDirectory.insert(sName, entityType);

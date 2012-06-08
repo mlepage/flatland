@@ -382,8 +382,8 @@ if (Variable::render_entity_image.getFloatValue() &&
 	srcRect.left =
 		View::getWorldView().getMin()[0] -
 		kEntity.getBounds().getMin()[0];
-	srcRect.bottom = srcRect.top + vScreenViewSize[1];
-	srcRect.right = srcRect.left + vScreenViewSize[0];
+	srcRect.bottom = srcRect.top + (int)vScreenViewSize[1];
+	srcRect.right = srcRect.left + (int)vScreenViewSize[0];
 	// Clip the source rect to the image.
 	if (srcRect.top < 0)
 	{
@@ -395,22 +395,26 @@ if (Variable::render_entity_image.getFloatValue() &&
 		vScreenOrigin[0] -= srcRect.left;
 		srcRect.left = 0;
 	}
-	if (kAnim.getSize()[1] < srcRect.bottom)
+	if ((int)kAnim.getSize()[1] < srcRect.bottom)
 	{
 		srcRect.bottom = kAnim.getSize()[1];
 	}
-	if (kAnim.getSize()[0] < srcRect.right)
+	if ((int)kAnim.getSize()[0] < srcRect.right)
 	{
 		srcRect.right = kAnim.getSize()[0];
 	}
 
 	// Anim frame.
 	int nImageFrame = kAnim.getFrame(kEntity.m_nAnimFrameIndex).m_nIndex;
-	srcRect.left += nImageFrame * kAnim.getSize()[0];
-	srcRect.right += nImageFrame * kAnim.getSize()[0];
+	srcRect.left += nImageFrame * (int)kAnim.getSize()[0];
+	srcRect.right += nImageFrame * (int)kAnim.getSize()[0];
 	Entity& entity = const_cast<Entity&>(kEntity);
+	if (!Game::isPaused())
+	{
+		++entity.m_nAnimFrameCount;
+	}
 	if (kAnim.getFrame(kEntity.m_nAnimFrameIndex).m_nCount <=
-		++entity.m_nAnimFrameCount)
+		entity.m_nAnimFrameCount)
 	{
 		entity.m_nAnimFrameCount = 0;
 		if (kAnim.getNumberOfFrames() <=

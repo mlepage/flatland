@@ -40,6 +40,10 @@ public:
 	drawConsole();
 
 	static
+	void
+	drawMenu();
+
+	static
 	CGapiSurface*
 	getBackBuffer();
 

@@ -10,6 +10,34 @@ Windows executables are provided for each milestone release. Instructions are in
 Release History
 ===============
 
+Milestone 5 - Sep 24, 2003
+--------------------------
+
+M5 is the "state" milestone, adding various elements of program state, plus a new level and a few gameplay enhancements.
+
+The new level is hand-drawn using pencil and markers. It was imported using a digital camera (no scanner yet) and cleaned up in The GIMP, where an animated background was added.
+
+The "drill" entity was created by taking multiple photos of a rotating drill bit against a blue screen (actually a recycling box).
+
+The program now goes from the splash screen to a title screen. When a game is started, it displays a loading screen, then runs the game. When the game is finished, it returns to the title screen. Upon quitting, it displays a nag screen (eventually only for unregistered copies).
+
+An onscreen menu is active on the title screen, and during game pause. It is drawn primitively in this release, but reacts properly to the keys and stylus. You can use the stylus, or the keys up, down, and enter. The game pause menu can also be dismissed by unpausing, of course.
+
+Currently, the only title screen menu items that work are "new game" and "quit". During game pause, all three menu items work: "resume game", "end game", and "quit".
+
+Autoscroll is now implemented. The enter key toggles autoscroll on and off. Scrolling manually with the arrow keys also has the effect of turning autoscroll off. The entity that will be autoscrolled is the last player entity you controlled.
+
+A new entity type "force" has the ability to capture the player entity after a delay. When overlaid over a control entity, this makes game play much easier.
+
+The program controls are now as follows:
+
+- Stylus: Menu and game interaction.
+- Arrow keys: Menu interaction and game scrolling.
+- Enter key: Menu selection and autoscroll toggle.
+- 3 key: Toggle game pause (with menu).
+- 2 key: Single step a game frame.
+- 1 key: Toggle wireframe graphics.
+
 Milestone 4 - Sep 02, 2003
 --------------------------
 

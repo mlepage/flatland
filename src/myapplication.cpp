@@ -21,6 +21,8 @@
 #include "game.h"
 #include "image.h"
 #include "key.h"
+#include "menu.h"
+#include "program_state.h"
 #include "render.h"
 #include "resourcex.h"
 #include "screen.h"
@@ -32,6 +34,71 @@
 #include "world.h"
 
 
+CMyApplication*
+CMyApplication::m_pMyApplication;
+
+
+// TODO this needs a home but refactor first
+// (it is currently in both ProgramState and CMyApplication
+static
+void
+setActiveEntity(const Vec2& kvPoint)
+{
+	Stylus::setLeadPoint(kvPoint);
+
+	std::vector<Entity*> cpEntity =
+		World::getEntitiesAtPoint(
+			dehomo(View::getTransformS2W() * homo(kvPoint)));
+
+	// Go through the entities. If we are in a control entity, and also a
+	// player entity, then make that entity the active entity.
+
+	Entity* pPlayerEntity = NULL;
+	bool bControlEntity = false;
+
+	for (int n = 0; n != cpEntity.size(); ++n)
+	{
+		// TODO use static variables to lookup entity type?
+		if (cpEntity[n]->getType().getName() == tstring(_T("control")))
+		{
+			bControlEntity = true;
+		}
+		else if (cpEntity[n]->getType().getName() == tstring(_T("player")))
+		{
+			pPlayerEntity = cpEntity[n];
+		}
+	}
+
+	if (bControlEntity && pPlayerEntity)
+	{
+		Game::setActiveEntity(pPlayerEntity);
+		// Set autoscroll entity.
+		Game::setAutoscrollEntity(pPlayerEntity);
+	}
+}
+
+
+static
+int
+getMenuItemIndex(
+	const Vec2& kvPoint)
+{
+	for (int n = 0; n != Menu::getCurrentMenu().getNumberOfItems(); ++n)
+	{
+		const Menu::Item& kItem = Menu::getCurrentMenu().getItem(n);
+		const Rect krBounds = kItem.getBounds();
+		if (Geometry::isPointInRect(kvPoint, krBounds))
+		{
+			return n;
+		}
+	}
+
+	return -1;
+}
+
+
+// TODO this needs a home but refactor first
+static
 void
 doConfigFile()
 {
@@ -66,11 +133,13 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPTSTR pCmdLine, int 
 	// Initialization.
 	Variable::init();
 	Resourcex::init();
+	ProgramState::init();
 	Console::init();
 	Render::init();
 	View::init();
 
 	EntityType::init();
+	Menu::init();
 
 #ifdef FLATLAND_ENABLE_TEST
 	Console::print(_T("Performing automated tests.\n"));
@@ -96,6 +165,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPTSTR pCmdLine, int 
 	// Create the application
 	Console::print(_T("Creating application.\n"));
 	CMyApplication app(config);
+	CMyApplication::m_pMyApplication = &app;
 
 	Console::print(_T("Flatland initialized.\n"));
 
@@ -125,13 +195,10 @@ HRESULT CMyApplication::CreateSurfaces(CGapiDisplay& display, HINSTANCE hInstanc
 {
 	Screen::setSystemFont(display.GetSystemFont());
 
-#if 0
-	// Load images here for now, because we need to have a primary.
-	Game::getEntity(0).getModel().setImage(
-		Resourcex::loadImage(Game::getEntity(0).getModel().getName().c_str()));
-	Game::getEntity(1).getModel().setImage(
-		Resourcex::loadImage(Game::getEntity(1).getModel().getName().c_str()));
+#ifndef FLATLAND_ENABLE_CUSTOM_LINE_CLIPPING
+	backbuffer.SetClipper(NULL);
 #endif
+	Screen::setBackBuffer(&m_backbuffer);
 
 	return S_OK;
 }
@@ -159,41 +226,6 @@ HRESULT DrawFrameInfo(CGapiSurface& surface, DWORD dwY, const TCHAR* pText, COLO
 }
 
 
-setActiveEntity(const Vec2& kvPoint)
-{
-	Stylus::setLeadPoint(kvPoint);
-
-	std::vector<Entity*> cpEntity =
-		World::getEntitiesAtPoint(
-			dehomo(View::getTransformS2W() * homo(kvPoint)));
-
-	// Go through the entities. If we are in a control entity, and also a
-	// player entity, then make that entity the active entity.
-
-	Entity* pPlayerEntity = NULL;
-	bool bControlEntity = false;
-
-	for (int n = 0; n != cpEntity.size(); ++n)
-	{
-		// TODO use static variables to lookup entity type?
-		if (cpEntity[n]->getType().getName() == tstring(_T("control")))
-		{
-			bControlEntity = true;
-		}
-		else if (cpEntity[n]->getType().getName() == tstring(_T("player")))
-		{
-			pPlayerEntity = cpEntity[n];
-		}
-	}
-
-	if (bControlEntity && pPlayerEntity)
-	{
-		Game::setActiveEntity(pPlayerEntity);
-	}
-
-	return S_OK;
-}
-
 /*******************************************************************************
 	Analogous to Quake 2's Qcommon_Frame.
 *******************************************************************************/
@@ -202,230 +234,12 @@ CMyApplication::ProcessNextFrame(
 	CGapiSurface& backbuffer,
 	DWORD dwFlags)
 {
-	// Splash screen.
-	static CGapiSurface* pSplash = 0;
-	static int nSplashCount = 0;
-	const int knSplashTime = 90;
-	const int knFadeTime = 30;
-	if (nSplashCount == 0)
-	{
-		pSplash = &Resourcex::getImage(_T("splash")).getSurface();
-	}
-	if (nSplashCount < knSplashTime)
-	{
-		backbuffer.FillRect(
-			NULL,
-			RGB(0, 0, 0),
-			0,
-			NULL);
-		GDBLTFASTFX fx;
-		if (nSplashCount < knFadeTime)
-		{
-			fx.dwOpacity =
-				double(nSplashCount) / knFadeTime * 255;
-		}
-		else if ((knSplashTime - knFadeTime) <= nSplashCount)
-		{
-			fx.dwOpacity =
-				double(knSplashTime - nSplashCount - 1) / knFadeTime * 255;
-		}
-		else
-		{
-			fx.dwOpacity = 255;
-		}
-		backbuffer.BltFast(
-			0,
-			0,
-			pSplash,
-			NULL,
-			GDBLTFAST_OPACITY,
-			&fx);
-		++nSplashCount;
-		return S_OK;
-	}
-
-	// Load first level.
-	if (nSplashCount == knSplashTime)
-	{
-		// TODO unload splash screen.
-		Console::print(_T("Loading level\n"));
-		Resourcex::loadLevel(Variable::first_level.getValue());
-		++nSplashCount;
-	}
-
-#ifndef FLATLAND_ENABLE_CUSTOM_LINE_CLIPPING
-	backbuffer.SetClipper(NULL);
-#endif
-	Screen::setBackBuffer(&backbuffer);
-
-	// Try to set the active entity if in stylus easy mode.
-	if (Variable::stylus_easy.getFloatValue() &&
-		Stylus::isDown() &&
-		!Game::getActiveEntity())
-	{
-		setActiveEntity(Stylus::getLeadPoint());
-	}
-
-	// See if the active entity should be disabled.
-	if (Game::getActiveEntity())
-	{
-		std::vector<Entity*> cpEntity =
-			World::getEntitiesAtPoint(
-				dehomo(View::getTransformS2W() * homo(Stylus::getLeadPoint())));
-
-		bool bControlEntity = false;
-
-		for (int n = 0; n != cpEntity.size(); ++n)
-		{
-			// TODO use static variables to lookup entity type?
-			if (cpEntity[n]->getType().getName() == tstring(_T("control")))
-			{
-				bControlEntity = true;
-			}
-		}
-		if (!bControlEntity)
-		{
-			Game::setActiveEntity(0);
-		}
-	}
-
-	// Move the active entity via the stylus. This needs to be before runFrame
-	// so the active entity doesn't lag behind the stylus.
-	if (Game::getActiveEntity())
-	{
-		// The active entity's velocity is set to place it exactly where the
-		// stylus is.
-		Game::getActiveEntity()->getVelocity() =
-			Vec2(
-				Stylus::getLeadPoint()[0] - Stylus::getAnchorPoint()[0],
-				-(Stylus::getLeadPoint()[1] - Stylus::getAnchorPoint()[1]));
-	}
-	// Reset the anchor point to the lead point for the next frame.
-	Stylus::setAnchorPoint(Stylus::getLeadPoint());
-
-	// The following are analogous to Quake 2's SV_Frame.
-
-	if (!Game::isPaused())
-	{
-		Game::runFrame();
-	}
-
-	// The following are analogous to Quake 2's CL_Frame.
-
-	// I need this to process keys that repeat, like +forward and -forward,
-	// until I find out where Quake 2 does it.
-	Key::processCommands();
-
-	// For debugging
-	if (Game::isFast())
-	{
-		m_config.dwTargetFPS = 90;
-		Screen::clear();
-		Screen::drawCenterText();
-	}
-	else
-	{
-		m_config.dwTargetFPS = 30;
-		Screen::updateScreen();
-	}
-
-
-#if 0
-	// Blast world to screen.
-	// Screen origin and size.
-	Vec2 vScreenOrigin = View::getScreenView().getMin();
-	Vec2 vScreenViewSize =
-		View::getScreenView().getMax() - View::getScreenView().getMin();
-	// Set the source rect to the view in image coordinates.
-	RECT srcRect;
-	srcRect.top =
-		Game::getEntity(0).getBounds().getMax()[1] -
-		View::getWorldView().getMax()[1];
-	srcRect.left =
-		View::getWorldView().getMin()[0] -
-		Game::getEntity(0).getBounds().getMin()[0];
-	srcRect.bottom = srcRect.top + vScreenViewSize[1];
-	srcRect.right = srcRect.left + vScreenViewSize[0];
-	// Clip the source rect to the image.
-	if (srcRect.top < 0)
-	{
-		vScreenOrigin[1] -= srcRect.top;
-		srcRect.top = 0;
-	}
-	if (srcRect.left < 0)
-	{
-		vScreenOrigin[0] -= srcRect.left;
-		srcRect.left = 0;
-	}
-	if (m_world.GetHeight() < srcRect.bottom)
-	{
-		srcRect.bottom = m_world.GetHeight();
-	}
-	if (m_world.GetWidth() < srcRect.right)
-	{
-		srcRect.right = m_world.GetWidth();
-	}
-	backbuffer.BltFast(
-		vScreenOrigin[0],
-		vScreenOrigin[1],
-		&m_world,
-		&srcRect,
-		0,
-		NULL);
-#endif
-#if 0
-	// Blast circle to screen.
-//	BltFast( 
-//LONG destX, LONG destY, 
-//CGapiSurface* pSrcSurface, RECT* pSrcRect, 
-//DWORD dwFlags, GDBLTFASTFX* pGDBltFastFx); 
-	backbuffer.BltFast(200, 200, &m_circle, NULL, 0, NULL);
-#endif
-
-#if 0
-	// Preliminary performance testing code
-	LARGE_INTEGER ticksPerSecond;
-	LARGE_INTEGER tick1;
-	LARGE_INTEGER tick2;
-	LARGE_INTEGER time;
-
-	QueryPerformanceFrequency(&ticksPerSecond);
-	QueryPerformanceCounter(&tick1);
-
-	// Insert code to time here.
-
-	QueryPerformanceCounter(&tick2);
-
-	time.QuadPart = tick2.QuadPart - tick1.QuadPart;
-
-	TCHAR str[128];
-
-	_stprintf(str, TEXT("%d ticks"), time.QuadPart);
-	DrawFrameInfo(backbuffer, 320 - 40, str, RGB(170, 90, 60));
-
-	_stprintf(str, TEXT("%.3f seconds"), (double)time.QuadPart / (double)ticksPerSecond.QuadPart);
-	DrawFrameInfo(backbuffer, 320 - 20, str, RGB(90, 60, 170));
-#endif
-
-#if 1
-	// Frame rate etc.
-	TCHAR str[128];
-	FLOAT nActualFrameTime = 0;
-	m_timer.GetActualFrameTime(&nActualFrameTime);
-	_stprintf(str, TEXT("%.2f ms"), nActualFrameTime);
-	backbuffer.DrawText(120, 312, str, Screen::getSystemFont(),
-		0, NULL, 0, NULL);
-	//DrawFrameInfo(backbuffer, 320 - 40, str, RGB(170, 90, 60));
-	FLOAT nFrameRate = 0;
-	m_timer.GetActualFrameRate(&nFrameRate);
-	_stprintf(str, TEXT("%.2f fps"), nFrameRate);
-	backbuffer.DrawText(180, 312, str, Screen::getSystemFont(),
-		0, NULL, 0, NULL);
-	//DrawFrameInfo(backbuffer, 320 - 20, str, RGB(90, 60, 170));
-#endif
+	ProgramState::getCurrentState().processFrame();
+	ProgramState::incrementCurrentFrame();
 
 	return S_OK;
 }
+
 
 HRESULT CMyApplication::KeyDown(DWORD dwKey, GDKEYLIST& keylist)
 {
@@ -437,7 +251,26 @@ HRESULT CMyApplication::KeyDown(DWORD dwKey, GDKEYLIST& keylist)
 
 	if (dwKey == keylist.vkA)
 	{
-		Game::setPaused(!Game::isPaused());
+		if (Variable::render_entity_image.getFloatValue())
+		{
+			Variable::render_brush_bounds.setValue(_T("1"));
+			Variable::render_brush_outline.setValue(_T("1"));
+			Variable::render_entity_bounds.setValue(_T("1"));
+			Variable::render_entity_identifier.setValue(_T("1"));
+			Variable::render_entity_velocity.setValue(_T("1"));
+			Variable::render_entity_image.setValue(_T("0"));
+			Variable::render_model_bounds.setValue(_T("1"));
+		}
+		else
+		{
+			Variable::render_brush_bounds.setValue(_T("0"));
+			Variable::render_brush_outline.setValue(_T("0"));
+			Variable::render_entity_bounds.setValue(_T("0"));
+			Variable::render_entity_identifier.setValue(_T("0"));
+			Variable::render_entity_velocity.setValue(_T("0"));
+			Variable::render_entity_image.setValue(_T("1"));
+			Variable::render_model_bounds.setValue(_T("0"));
+		}
 	}
 	else if (dwKey == keylist.vkB)
 	{
@@ -445,15 +278,68 @@ HRESULT CMyApplication::KeyDown(DWORD dwKey, GDKEYLIST& keylist)
 	}
 	else if (dwKey == keylist.vkC)
 	{
-		Shutdown();
+		if (&ProgramState::getCurrentState() == &ProgramState::game_running)
+		{
+			Game::setPaused(!Game::isPaused());
+			if (Game::isPaused())
+			{
+				// Menu.
+				Menu::setCurrentMenu(Menu::game_main);
+				Menu::setCurrentItem(0);
+			}
+			else
+			{
+				Menu::clearCurrentMenu();
+			}
+		}
+	}
+	else if (dwKey == keylist.vkStart)
+	{
+		if (Menu::hasCurrentMenu())
+		{
+			Menu::getCurrentMenu().getItem(Menu::getCurrentItem()).doCommand();
+		}
+
+		if (&ProgramState::getCurrentState() == &ProgramState::game_running)
+		{
+			// Toggle autoscroll.
+			Game::setAutoscrollEnabled(!Game::isAutoscrollEnabled());
+		}
 	}
 	else if (dwKey == keylist.vkUp)
 	{
 		Key::keyDown(Key::m_knKeyUp);
+		if (Menu::hasCurrentMenu())
+		{
+			const int knCurrentItem = Menu::getCurrentItem();
+			if (knCurrentItem < 1)
+			{
+				Menu::setCurrentItem(
+					Menu::getCurrentMenu().getNumberOfItems() - 1);
+			}
+			else
+			{
+				Menu::setCurrentItem(
+					knCurrentItem - 1);
+			}
+		}
 	}
 	else if (dwKey == keylist.vkDown)
 	{
 		Key::keyDown(Key::m_knKeyDown);
+		if (Menu::hasCurrentMenu())
+		{
+			const int knCurrentItem = Menu::getCurrentItem();
+			if (Menu::getCurrentMenu().getNumberOfItems() - 1 <= knCurrentItem)
+			{
+				Menu::setCurrentItem(0);
+			}
+			else
+			{
+				Menu::setCurrentItem(
+					knCurrentItem + 1);
+			}
+		}
 	}
 	else if (dwKey == keylist.vkLeft)
 	{
@@ -500,6 +386,11 @@ HRESULT CMyApplication::StylusDown(POINT p)
 
 	setActiveEntity(kvPoint);
 
+	if (Menu::hasCurrentMenu())
+	{
+		Menu::setCurrentItem(getMenuItemIndex(kvPoint));
+	}
+
 	return S_OK;
 }
 
@@ -509,7 +400,24 @@ HRESULT CMyApplication::StylusUp(POINT p)
 
 	const Vec2 kvPoint(p.x, p.y);
 
-	Game::setActiveEntity(0);
+	if (Game::getActiveEntity())
+	{
+		// This is so forces don't act on a thrown player entity for a few
+		// frames, to allow them to escape.
+		Game::getActiveEntity()->m_nForceFrame =
+			ProgramState::getCurrentFrame();
+
+		Game::setActiveEntity(0);
+	}
+
+	if (Menu::hasCurrentMenu())
+	{
+		const int knMenuItemIndex = getMenuItemIndex(kvPoint);
+		if (knMenuItemIndex != -1)
+		{
+			Menu::getCurrentMenu().getItem(knMenuItemIndex).doCommand();
+		}
+	}
 
 	return S_OK;
 }
@@ -523,6 +431,11 @@ HRESULT CMyApplication::StylusMove(POINT p)
 {
 	const Vec2 kvPoint(p.x, p.y);
 	Stylus::setLeadPoint(kvPoint);
+
+	if (Menu::hasCurrentMenu() && Stylus::isDown())
+	{
+		Menu::setCurrentItem(getMenuItemIndex(kvPoint));
+	}
 
 	return S_OK;
 }

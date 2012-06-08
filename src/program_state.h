@@ -2,172 +2,93 @@
 // Copyright (C) 2003 Marc A. Lepage.
 
 
-#ifndef GUARD__GAME
-#define GUARD__GAME
-
-
-#include <vector>
-#include "entity.h"
-#include "world.h"
+#ifndef GUARD__PROGRAM_STATE
+#define GUARD__PROGRAM_STATE
 
 
 /*******************************************************************************
+	Program state.
+
+	Key question: handle menu as separate states, or overlay it onto existing
+	states?
 *******************************************************************************/
-class Game
+class ProgramState
 {
+
+public:
+
+	class Editor;
+	class GameRunning;
+	class GameStart;
+	class Splash;
+	class Title;
+	class Quit;
 
 
 public:
 
 	static
-	void
-	destroyEntity(
-		Entity& entity);
-
-	static
-	void
-	endGame();
-
-	static
-	Entity*
-	getActiveEntity();
-
-	static
-	Entity*
-	getAutoscrollEntity();
-
-	static
 	int
-	getChecksum();
+	getCurrentFrame();
 
 	static
-	Entity&
-	getEntity(
-		const int knIndex);
-
-	static
-	int
-	getFrame();
-
-	static
-	int
-	getNumberOfEntities();
-
-	static
-	bool
-	isAutoscrollEnabled();
-
-	static
-	bool
-	isFast();
-
-	static
-	bool
-	isPaused();
+	ProgramState&
+	getCurrentState();
 
 	static
 	void
-	newGame();
-
-	static
-	bool
-	resolveCollision(
-		const World::Collision& kCollision,
-		Entity& entity1,                    // The entity that moved.
-		Entity& entity2);                   // The entity it hit.
+	incrementCurrentFrame();
 
 	static
 	void
-	runEntity(
-		Entity& entity);
+	init();
 
 	static
 	void
-	runFrame();
+	setCurrentState(
+		ProgramState& programState);
+
+
+public:
 
 	static
+	Editor editor;
+	static
+	GameRunning game_running;
+	static
+	GameStart game_start;
+	static
+	Splash splash;
+	static
+	Title title;
+	static
+	Quit quit;
+
+
+public:
+
+	// TODO need virtual destructor?
+
+	virtual
 	void
-	setActiveEntity(
-		Entity* pEntity);
+	enterState();
 
-	static
+	virtual
 	void
-	setAutoscrollEnabled(
-		const bool kbAutoscrollEnabled);
+	exitState();
 
-	static
+	virtual
 	void
-	setAutoscrollEntity(
-		Entity* pEntity);
-
-	static
-	void
-	setFast(
-		const bool kbFast);
-
-	static
-	void
-	setPaused(
-		const bool kbPaused);
-
-	static
-	Entity&
-	spawnEntity();
+	processFrame() = 0;
 
 
 private:
 
 	static
-	void
-	checkForEscapedEntities();
+	ProgramState* m_pCurrentState;
 
 	static
-	void
-	checkIntegrity();
-
-	static
-	void
-	checkInterpenetration();
-
-	static
-	void
-	checkInterpenetrationSimple();
-
-	static
-	void
-	debugSetEntityState(
-		Entity& entity,
-		const int knX,
-		const int knY,
-		const int knDeltaX,
-		const int knDeltaY);
-
-	static
-	void
-	physics(
-		Entity& entity);
-
-	static
-	bool m_bFast;
-
-	static
-	bool m_bAutoscrollEnabled;
-
-	static
-	bool m_bPaused;
-
-	static
-	int m_nFrame;
-
-	// The entities.
-	static
-	std::vector<Entity*> m_cpEntity;
-
-	static
-	Entity* m_pActiveEntity;
-
-	static
-	Entity* m_pAutoscrollEntity;
+	int m_nCurrentFrame;
 
 
 };
@@ -176,31 +97,18 @@ private:
 /*******************************************************************************
 *******************************************************************************/
 inline
-Entity*
-Game::getActiveEntity()
+void
+ProgramState::enterState()
 {
-	return m_pActiveEntity;
 }
 
 
 /*******************************************************************************
 *******************************************************************************/
 inline
-Entity*
-Game::getAutoscrollEntity()
+void
+ProgramState::exitState()
 {
-	return m_pAutoscrollEntity;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-Entity&
-Game::getEntity(
-	const int knIndex)
-{
-	return *m_cpEntity[knIndex];
 }
 
 
@@ -208,49 +116,32 @@ Game::getEntity(
 *******************************************************************************/
 inline
 int
-Game::getFrame()
+ProgramState::getCurrentFrame()
 {
-	return m_nFrame;
+	return m_nCurrentFrame;
 }
 
 
 /*******************************************************************************
 *******************************************************************************/
 inline
-int
-Game::getNumberOfEntities()
+ProgramState&
+ProgramState::getCurrentState()
 {
-	return m_cpEntity.size();
+	return *m_pCurrentState;
 }
 
 
 /*******************************************************************************
+	This only needs to be public so I can call it from elsewhere. It saves me
+	from having to handle all the default behaviour in this class, when I
+	already have default functions elsewhere.
 *******************************************************************************/
 inline
-bool
-Game::isAutoscrollEnabled()
+void
+ProgramState::incrementCurrentFrame()
 {
-	return m_bAutoscrollEnabled;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-bool
-Game::isFast()
-{
-	return m_bFast;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-bool
-Game::isPaused()
-{
-	return m_bPaused;
+	++m_nCurrentFrame;
 }
 
 
@@ -258,54 +149,106 @@ Game::isPaused()
 *******************************************************************************/
 inline
 void
-Game::setActiveEntity(
-	Entity* pEntity)
+ProgramState::setCurrentState(
+	ProgramState& programState)
 {
-	m_pActiveEntity = pEntity;
+	if (m_pCurrentState)
+	{
+		m_pCurrentState->exitState();
+	}
+
+	m_pCurrentState = &programState;
+
+	m_pCurrentState->enterState();
 }
 
 
 /*******************************************************************************
 *******************************************************************************/
-inline
-void
-Game::setAutoscrollEnabled(
-	const bool kbAutoscrollEnabled)
+class ProgramState::Editor : public ProgramState
 {
-	m_bAutoscrollEnabled = kbAutoscrollEnabled;
-}
+
+public:
+
+	virtual void processFrame();
+
+
+};
 
 
 /*******************************************************************************
 *******************************************************************************/
-inline
-void
-Game::setAutoscrollEntity(
-	Entity* pEntity)
+class ProgramState::GameRunning : public ProgramState
 {
-	m_pAutoscrollEntity = pEntity;
-}
+
+public:
+
+	virtual void processFrame();
+
+
+};
 
 
 /*******************************************************************************
 *******************************************************************************/
-inline
-void
-Game::setFast(
-	const bool kbFast)
+class ProgramState::GameStart : public ProgramState
 {
-	m_bFast = kbFast;
-}
+
+public:
+
+	virtual void processFrame();
+
+
+};
 
 
 /*******************************************************************************
 *******************************************************************************/
+class ProgramState::Splash : public ProgramState
+{
+
+public:
+
+	virtual void processFrame();
+
+
+};
+
+
+/*******************************************************************************
+*******************************************************************************/
+class ProgramState::Title : public ProgramState
+{
+
+public:
+
+	virtual void processFrame();
+
+
+};
+
+
+/*******************************************************************************
+*******************************************************************************/
+class ProgramState::Quit : public ProgramState
+{
+
+public:
+
+	virtual void processFrame();
+
+
+};
+
+
+/*******************************************************************************
+	Moved this here for inlining.
+*******************************************************************************/
 inline
 void
-Game::setPaused(
-	const bool kbPaused)
+ProgramState::init()
 {
-	m_bPaused = kbPaused;
+	setCurrentState(ProgramState::splash);
 }
 
 

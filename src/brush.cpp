@@ -30,6 +30,12 @@ Brush::addVertex(
 	m_cvVertex.push_back(kvVertex);
 	m_cvLine.push_back(Vec3());
 
+	if (m_cvVertex.size() == 1)
+	{
+		// Don't set edge lines if only 1 vertex.
+		return;
+	}
+
 	// Set edge lines.
 	int n1;
 	int n2;

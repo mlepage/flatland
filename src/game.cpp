@@ -11,13 +11,19 @@
 #include <cmath>
 #include "console.h"
 #include "entity_type.h"
+#include "menu.h"
+#include "program_state.h"
 #include "resourcex.h"
 #include "screen.h"
+#include "variable.h"
 #include "world.h"
 
 
 bool
 Game::m_bFast = false;
+
+bool
+Game::m_bAutoscrollEnabled = true;
 
 bool
 Game::m_bPaused = false;
@@ -31,22 +37,8 @@ Game::m_cpEntity;
 Entity*
 Game::m_pActiveEntity = 0;
 
-
-/*******************************************************************************
-	TODO Destroy entities. Right now this leaks. Also, I need to destroy
-	anonymous models when I destroy their entity.
-*******************************************************************************/
-void
-Game::destroyEntity(
-	Entity& entity)
-{
-	World::unlinkEntity(entity);
-
-	// TODO It is dangerous to change the vector while iterating through it
-	// (e.g. destroying entities while processing them). Fix this.
-
-	m_cpEntity.erase(std::find(m_cpEntity.begin(), m_cpEntity.end(), &entity));
-}
+Entity*
+Game::m_pAutoscrollEntity = 0;
 
 
 /*******************************************************************************
@@ -217,6 +209,44 @@ Game::debugSetEntityState(
 
 
 /*******************************************************************************
+	TODO Destroy entities. Right now this leaks. Also, I need to destroy
+	anonymous models when I destroy their entity.
+*******************************************************************************/
+void
+Game::destroyEntity(
+	Entity& entity)
+{
+	World::unlinkEntity(entity);
+
+	// TODO It is dangerous to change the vector while iterating through it
+	// (e.g. destroying entities while processing them). Fix this.
+
+	m_cpEntity.erase(std::find(m_cpEntity.begin(), m_cpEntity.end(), &entity));
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Game::endGame()
+{
+	// TODO some of this should be elsewhere. Maybe startGame?
+	// Destroy all remaining entities (reverse order).
+	for (int n = Game::getNumberOfEntities() - 1; n != -1; --n)
+	{
+		Entity& entity = Game::getEntity(n);
+		Game::destroyEntity(entity);
+	}
+	// Menu.
+	Menu::setCurrentMenu(Menu::title_main);
+	Menu::setCurrentItem(0);
+	Game::setPaused(false);
+	// Go back to title screen.
+	ProgramState::setCurrentState(ProgramState::title);
+}
+
+
+/*******************************************************************************
 *******************************************************************************/
 int
 Game::getChecksum()
@@ -244,713 +274,12 @@ Game::getChecksum()
 /*******************************************************************************
 *******************************************************************************/
 void
-Game::makeTestLevel()
+Game::newGame()
 {
-	//makeTestLevel1();
-	//makeTestLevel2();
-	makeTestLevel3();
-}
+	ProgramState::setCurrentState(ProgramState::game_start);
 
-
-/*******************************************************************************
-	The test world is 500x600, which is slightly wider and shorter than 4x4
-	screens.
-
-	The test world consists of 5 brushes: 1 in the center and 4 on the edges.
-*******************************************************************************/
-void
-Game::makeTestLevel1()
-{
-	Model* pWorldModel = new Model();
-	{
-		// Center.
-		Brush brush;
-		brush.addVertex(
-			Vec2(0, 50));
-		brush.addVertex(
-			Vec2(-50, 0));
-		brush.addVertex(
-			Vec2(0, -50));
-		brush.addVertex(
-			Vec2(50, 0));
-		pWorldModel->addBrush(brush);
-	}
-	{
-		// Northeast.
-		Brush brush;
-		brush.addVertex(
-			Vec2(250, 300));
-		brush.addVertex(
-			Vec2(50, 300));
-		brush.addVertex(
-			Vec2(250, 50));
-		pWorldModel->addBrush(brush);
-	}
-	{
-		// Northwest.
-		Brush brush;
-		brush.addVertex(
-			Vec2(-250, 300));
-		brush.addVertex(
-			Vec2(-250, 50));
-		brush.addVertex(
-			Vec2(50, 300));
-		pWorldModel->addBrush(brush);
-	}
-	{
-		// Southwest.
-		Brush brush;
-		brush.addVertex(
-			Vec2(-250, -300));
-		brush.addVertex(
-			Vec2(50, -300));
-		brush.addVertex(
-			Vec2(-250, 50));
-		pWorldModel->addBrush(brush);
-	}
-	{
-		// Southeast.
-		Brush brush;
-		brush.addVertex(
-			Vec2(250, -300));
-		brush.addVertex(
-			Vec2(250, 50));
-		brush.addVertex(
-			Vec2(50, -300));
-		pWorldModel->addBrush(brush);
-	}
-
-	Entity* pWorldEntity = &Game::spawnEntity();
-	pWorldEntity->setModel(pWorldModel);
-	pWorldEntity->getColour() = Vec3(127, 127, 127);
-	// don't link world
-	// but still need to set its bounds?
-	pWorldEntity->setBounds(pWorldModel->getBounds());
-
-	Model* pShipModel = new Model();
-	{
-		// Right.
-		Brush brush;
-		brush.addVertex(Vec2(5, -10));
-		brush.addVertex(Vec2(15, 0));
-		brush.addVertex(Vec2(5, 20));
-		pShipModel->addBrush(brush);
-	}
-	{
-		// Left.
-		Brush brush;
-		brush.addVertex(Vec2(-5, 20));
-		brush.addVertex(Vec2(-15, 0));
-		brush.addVertex(Vec2(-5, -10));
-		pShipModel->addBrush(brush);
-	}
-
-	// This ship moves.
-	Entity* pShipEntity = &Game::spawnEntity();
-	pShipEntity->setModel(pShipModel);
-	pShipEntity->setMobile(true);
-	pShipEntity->getColour() = Vec3(0, 255, 255);
-	pShipEntity->getOrigin() = Vec2(0, 225);
-	//pShipEntity->getVelocity() = Vec2(0, 20);
-	pShipEntity->setAngle(0);
-	World::linkEntity(*pShipEntity);
-
-	pShipEntity = &Game::spawnEntity();
-	pShipEntity->setMobile(true);
-	pShipEntity->setModel(pShipModel);
-	pShipEntity->getColour() = Vec3(0, 255, 0);
-	pShipEntity->getOrigin() = Vec2(50, 50) + Vec2(30, 30);
-	pShipEntity->getVelocity() = Vec2(5, 5);
-	pShipEntity->setAngle(-45);
-	World::linkEntity(*pShipEntity);
-
-	pShipEntity = &Game::spawnEntity();
-	pShipEntity->setModel(pShipModel);
-	pShipEntity->setMobile(true);
-	pShipEntity->getColour() = Vec3(255, 0, 0);
-	pShipEntity->getOrigin() = Vec2(-50, 50);
-	pShipEntity->getVelocity() = Vec2(0, 0);
-	pShipEntity->setAngle(45);
-	World::linkEntity(*pShipEntity);
-
-	pShipEntity = &Game::spawnEntity();
-	pShipEntity->setModel(pShipModel);
-	pShipEntity->setMobile(true);
-	pShipEntity->getColour() = Vec3(0, 0, 255);
-	pShipEntity->getOrigin() = Vec2(-50, -50);
-	pShipEntity->getVelocity() = Vec2(0, 0);
-	pShipEntity->setAngle(45 + 90);
-	World::linkEntity(*pShipEntity);
-
-	pShipEntity = &Game::spawnEntity();
-	pShipEntity->setModel(pShipModel);
-	pShipEntity->setMobile(true);
-	pShipEntity->getColour() = Vec3(255, 255, 0);
-	pShipEntity->getOrigin() = Vec2(50, -50);
-	pShipEntity->getVelocity() = Vec2(0, 0);
-	pShipEntity->setAngle(-45 - 90);
-	World::linkEntity(*pShipEntity);
-
-	Model* pCircleModel = new Model();
-	{
-		Brush brush;
-		brush.addVertex(Vec2(0, 10));
-		brush.addVertex(Vec2(-7, 7));
-		brush.addVertex(Vec2(-10, 0));
-		brush.addVertex(Vec2(-7, -7));
-		brush.addVertex(Vec2(0, -10));
-		brush.addVertex(Vec2(7, -7));
-		brush.addVertex(Vec2(10, 0));
-		brush.addVertex(Vec2(7, 7));
-		pCircleModel->addBrush(brush);
-	}
-
-	Entity* pCircleEntity = &Game::spawnEntity();
-	pCircleEntity->setModel(pCircleModel);
-	pCircleEntity->setMobile(true);
-	pCircleEntity->getColour() = Vec3(255, 0, 255);
-	pCircleEntity->getOrigin() = Vec2(100, 100);
-	World::linkEntity(*pCircleEntity);
-
-	pCircleEntity = &Game::spawnEntity();
-	pCircleEntity->setModel(pCircleModel);
-	pCircleEntity->setMobile(true);
-	pCircleEntity->getColour() = Vec3(255, 0, 255);
-	pCircleEntity->getOrigin() = Vec2(-100, 100);
-	World::linkEntity(*pCircleEntity);
-
-	pCircleEntity = &Game::spawnEntity();
-	pCircleEntity->setModel(pCircleModel);
-	pCircleEntity->setMobile(true);
-	pCircleEntity->getColour() = Vec3(255, 0, 255);
-	pCircleEntity->getOrigin() = Vec2(-100, -100);
-	World::linkEntity(*pCircleEntity);
-
-	pCircleEntity = &Game::spawnEntity();
-	pCircleEntity->setModel(pCircleModel);
-	pCircleEntity->setMobile(true);
-	pCircleEntity->getColour() = Vec3(255, 0, 255);
-	pCircleEntity->getOrigin() = Vec2(100, -100);
-	World::linkEntity(*pCircleEntity);
-}
-
-
-/*******************************************************************************
-	This world consists of adjacent octagonal rooms with passages joining them.
-	Each room contains four entities.
-*******************************************************************************/
-void
-Game::makeTestLevel2()
-{
-	// World parameters.
-	const int knRoomWidth = 240;
-	const int knRoomHeight = 320;
-	const int knHorizontalPassageWidth = 20;
-	const int knHorizontalPassageHeight = 100;
-	const int knVerticalPassageWidth = 100;
-	const int knVerticalPassageHeight = 20;
-	const scalar kfEntityRadius = 10;
-
-	// Coordinates of interest.
-	const int knX0 = 0;
-	const int knX1 = knHorizontalPassageWidth;
-	const int knX2 = (knRoomWidth / 2) - (knVerticalPassageWidth / 2);
-	const int knX3 = (knRoomWidth / 2) + (knVerticalPassageWidth / 2);
-	const int knX4 = knRoomWidth - knHorizontalPassageWidth;
-	const int knX5 = knRoomWidth;
-	const int knY0 = 0;
-	const int knY1 = knVerticalPassageHeight;
-	const int knY2 = (knRoomHeight / 2) - (knHorizontalPassageHeight / 2);
-	const int knY3 = (knRoomHeight / 2) + (knHorizontalPassageHeight / 2);
-	const int knY4 = knRoomHeight - knVerticalPassageHeight;
-	const int knY5 = knRoomHeight;
-
-	Model* pEntityModel = new Model();
-	{
-		const scalar kfDiagonal = kfEntityRadius * sqrt(2) / 2;
-		Brush brush;
-		brush.addVertex(Vec2(0, kfEntityRadius));
-		brush.addVertex(Vec2(-kfDiagonal, kfDiagonal));
-		brush.addVertex(Vec2(-kfEntityRadius, 0));
-		brush.addVertex(Vec2(-kfDiagonal, -kfDiagonal));
-		brush.addVertex(Vec2(0, -kfEntityRadius));
-		brush.addVertex(Vec2(kfDiagonal, -kfDiagonal));
-		brush.addVertex(Vec2(kfEntityRadius, 0));
-		brush.addVertex(Vec2(kfDiagonal, kfDiagonal));
-		pEntityModel->addBrush(brush);
-	}
-
-	// PERF The first edge tested is the edge BEFORE the first vertex. So we
-	// can try to order the edges to present the most likely candidate for
-	// collision first.
-	// This seems to gain only about 4% on both PC and PPC.
-#define REORDER_EDGES 1
-
-	// Room brushes. These are copied and translated to create rooms. Some are
-	// omitted to create passages between rooms.
-	std::vector<Brush> cRoomBrush;
-	{
-		// SW corner.
-		Brush brush;
-#if REORDER_EDGES
-		brush.addVertex(Vec2(knX1, knY2));
-		brush.addVertex(Vec2(knX0, knY2));
-		brush.addVertex(Vec2(knX0, knY0));
-		brush.addVertex(Vec2(knX2, knY0));
-		brush.addVertex(Vec2(knX2, knY1));
-#else
-		brush.addVertex(Vec2(knX0, knY0));
-		brush.addVertex(Vec2(knX2, knY0));
-		brush.addVertex(Vec2(knX2, knY1));
-		brush.addVertex(Vec2(knX1, knY2));
-		brush.addVertex(Vec2(knX0, knY2));
-#endif
-		cRoomBrush.push_back(brush);
-	}
-	{
-		// S passage.
-		Brush brush;
-#if REORDER_EDGES
-		brush.addVertex(Vec2(knX2, knY1));
-		brush.addVertex(Vec2(knX2, knY0));
-		brush.addVertex(Vec2(knX3, knY0));
-		brush.addVertex(Vec2(knX3, knY1));
-#else
-		brush.addVertex(Vec2(knX2, knY0));
-		brush.addVertex(Vec2(knX3, knY0));
-		brush.addVertex(Vec2(knX3, knY1));
-		brush.addVertex(Vec2(knX2, knY1));
-#endif
-		cRoomBrush.push_back(brush);
-	}
-	{
-		// SE corner.
-		Brush brush;
-#if REORDER_EDGES
-		brush.addVertex(Vec2(knX3, knY1));
-		brush.addVertex(Vec2(knX3, knY0));
-		brush.addVertex(Vec2(knX5, knY0));
-		brush.addVertex(Vec2(knX5, knY2));
-		brush.addVertex(Vec2(knX4, knY2));
-#else
-		brush.addVertex(Vec2(knX5, knY0));
-		brush.addVertex(Vec2(knX5, knY2));
-		brush.addVertex(Vec2(knX4, knY2));
-		brush.addVertex(Vec2(knX3, knY1));
-		brush.addVertex(Vec2(knX3, knY0));
-#endif
-		cRoomBrush.push_back(brush);
-	}
-	{
-		// E passage.
-		Brush brush;
-#if REORDER_EDGES
-		brush.addVertex(Vec2(knX4, knY2));
-		brush.addVertex(Vec2(knX5, knY2));
-		brush.addVertex(Vec2(knX5, knY3));
-		brush.addVertex(Vec2(knX4, knY3));
-#else
-		brush.addVertex(Vec2(knX5, knY2));
-		brush.addVertex(Vec2(knX5, knY3));
-		brush.addVertex(Vec2(knX4, knY3));
-		brush.addVertex(Vec2(knX4, knY2));
-#endif
-		cRoomBrush.push_back(brush);
-	}
-	{
-		// NE corner.
-		Brush brush;
-#if REORDER_EDGES
-		brush.addVertex(Vec2(knX4, knY3));
-		brush.addVertex(Vec2(knX5, knY3));
-		brush.addVertex(Vec2(knX5, knY5));
-		brush.addVertex(Vec2(knX3, knY5));
-		brush.addVertex(Vec2(knX3, knY4));
-#else
-		brush.addVertex(Vec2(knX5, knY5));
-		brush.addVertex(Vec2(knX3, knY5));
-		brush.addVertex(Vec2(knX3, knY4));
-		brush.addVertex(Vec2(knX4, knY3));
-		brush.addVertex(Vec2(knX5, knY3));
-#endif
-		cRoomBrush.push_back(brush);
-	}
-	{
-		// N passage.
-		Brush brush;
-#if REORDER_EDGES
-		brush.addVertex(Vec2(knX3, knY4));
-		brush.addVertex(Vec2(knX3, knY5));
-		brush.addVertex(Vec2(knX2, knY5));
-		brush.addVertex(Vec2(knX2, knY4));
-#else
-		brush.addVertex(Vec2(knX3, knY5));
-		brush.addVertex(Vec2(knX2, knY5));
-		brush.addVertex(Vec2(knX2, knY4));
-		brush.addVertex(Vec2(knX3, knY4));
-#endif
-		cRoomBrush.push_back(brush);
-	}
-	{
-		// NW corner.
-		Brush brush;
-#if REORDER_EDGES
-		brush.addVertex(Vec2(knX2, knY4));
-		brush.addVertex(Vec2(knX2, knY5));
-		brush.addVertex(Vec2(knX0, knY5));
-		brush.addVertex(Vec2(knX0, knY3));
-		brush.addVertex(Vec2(knX1, knY3));
-#else
-		brush.addVertex(Vec2(knX0, knY5));
-		brush.addVertex(Vec2(knX0, knY3));
-		brush.addVertex(Vec2(knX1, knY3));
-		brush.addVertex(Vec2(knX2, knY4));
-		brush.addVertex(Vec2(knX2, knY5));
-#endif
-		cRoomBrush.push_back(brush);
-	}
-	{
-		// W passage.
-		Brush brush;
-#if REORDER_EDGES
-		brush.addVertex(Vec2(knX1, knY3));
-		brush.addVertex(Vec2(knX0, knY3));
-		brush.addVertex(Vec2(knX0, knY2));
-		brush.addVertex(Vec2(knX1, knY2));
-#else
-		brush.addVertex(Vec2(knX0, knY3));
-		brush.addVertex(Vec2(knX0, knY2));
-		brush.addVertex(Vec2(knX1, knY2));
-		brush.addVertex(Vec2(knX1, knY3));
-#endif
-		cRoomBrush.push_back(brush);
-	}
-
-
-	// Room creation macros.
-#define ENTITY(nX, nY) \
-		pEntity = &Game::spawnEntity(); \
-		pEntity->setModel(pEntityModel); \
-		pEntity->setMobile(true); \
-		pEntity->getColour() = Vec3(255, 0, 255); \
-		pEntity->getOrigin() = Vec2(nX, nY) + kvOrigin; \
-		pEntity->getVelocity() = Vec2(2, 2); \
-		World::linkEntity(*pEntity);
-#define BEGIN_ROOM(nX, nY) \
-	{ \
-		const Vec2 kvOrigin(nX, nY); \
-		int n; \
-		Entity* pEntity; \
-		ENTITY(knX2 + 0, knY2 + 5); \
-		ENTITY(knX2 + 1, knY3 + 3); \
-		ENTITY(knX3 + 3, knY3 + 1); \
-		ENTITY(knX3 + 5, knY2 + 0);
-#define COPY_BRUSH(nBrushIndex) \
-	{ \
-		Brush brush; \
-		for (n = 0; n != cRoomBrush[nBrushIndex].getNumberOfVertices(); ++n) \
-		{ \
-			brush.addVertex(cRoomBrush[nBrushIndex].getVertex(n) + kvOrigin); \
-		} \
-		pWorldModel->addBrush(brush); \
-	}
-#define END_ROOM() \
-	}
-
-	// World model and entity.
-	Model* pWorldModel = new Model();
-	Entity* pWorldEntity = &Game::spawnEntity();
-	pWorldEntity->getColour() = Vec3(127, 127, 127);
-
-	// NE room.
-	BEGIN_ROOM(0, 0);
-	COPY_BRUSH(0);
-	//COPY_BRUSH(1);
-	COPY_BRUSH(2);
-	COPY_BRUSH(3);
-	COPY_BRUSH(4);
-	COPY_BRUSH(5);
-	COPY_BRUSH(6);
-	//COPY_BRUSH(7);
-	END_ROOM();
-
-	// NW room.
-	BEGIN_ROOM(-knRoomWidth, 0);
-	COPY_BRUSH(0);
-	//COPY_BRUSH(1);
-	COPY_BRUSH(2);
-	//COPY_BRUSH(3);
-	COPY_BRUSH(4);
-	COPY_BRUSH(5);
-	COPY_BRUSH(6);
-	COPY_BRUSH(7);
-	END_ROOM();
-
-	// SW room.
-	BEGIN_ROOM(-knRoomWidth, -knRoomHeight);
-	COPY_BRUSH(0);
-	COPY_BRUSH(1);
-	COPY_BRUSH(2);
-	COPY_BRUSH(3);
-	COPY_BRUSH(4);
-	//COPY_BRUSH(5);
-	COPY_BRUSH(6);
-	COPY_BRUSH(7);
-	END_ROOM();
-
-	// SE room.
-	BEGIN_ROOM(0, -knRoomHeight);
-	COPY_BRUSH(0);
-	COPY_BRUSH(1);
-	COPY_BRUSH(2);
-	COPY_BRUSH(3);
-	COPY_BRUSH(4);
-	//COPY_BRUSH(5);
-	COPY_BRUSH(6);
-	COPY_BRUSH(7);
-	END_ROOM();
-
-	pWorldEntity->setModel(pWorldModel);
-	pWorldEntity->setBounds(pWorldModel->getBounds());
-
-#if 0
-	// Diamond model.
-	FILE* pFile = _tfopen(_T("diamond.fmd"), _T("r"));
-	Model* pDiamondModel = new Model();
-	Reader::readModel(pFile, *pDiamondModel);
-#endif
-
-#if 0
-	{
-		// Last known state from frame 39467.
-		Entity* pEntity = &Game::spawnEntity();
-		pEntity->setModel(pDiamondModel);
-		pEntity->setMobile(true);
-		pEntity->getColour() = Vec3(0, 255, 255);
-		pEntity->getOrigin() = Vec2(100, 100);
-		pEntity->getVelocity() = Vec2(0, 0);
-		World::linkEntity(*pEntity);
-		//Game::debugSetEntityState(*pEntity, 1116935872, 1116523338, 1058486036, 1073472374);
-	}
-#endif
-
-#if 0
-	// Dump world to console for making model file.
-	const Model* kpDumpModel = pEntityModel;
-	for (int nBrushIndex = 0;
-		nBrushIndex != kpDumpModel->getNumberOfBrushes();
-		++nBrushIndex)
-	{
-		const Brush& kBrush = kpDumpModel->getBrush(nBrushIndex);
-
-		Console::print(_T("\tbrush\n"));
-		Console::print(_T("\t{\n"));
-
-		for (int nVertexIndex = 0;
-			nVertexIndex != kBrush.getNumberOfVertices();
-			++nVertexIndex)
-		{
-			const Vec2& kv = kBrush.getVertex(nVertexIndex);
-
-			Console::print(_T("\t\t<%f, %f>\n"), kv[0], kv[1]);
-		}
-
-		Console::print(_T("\t}\n"));
-	}
-#endif
-}
-
-
-/*******************************************************************************
-	This world is the same as test level 2, but loads the world from "world"
-	files, and the user entity from "user" files.
-*******************************************************************************/
-void
-Game::makeTestLevel3()
-{
-#if 0
-	// World parameters.
-	const int knRoomWidth = 240;
-	const int knRoomHeight = 320;
-	const int knHorizontalPassageWidth = 20;
-	const int knHorizontalPassageHeight = 100;
-	const int knVerticalPassageWidth = 100;
-	const int knVerticalPassageHeight = 20;
-	const scalar kfEntityRadius = 10;
-
-	// Coordinates of interest.
-	const int knX0 = 0;
-	const int knX1 = knHorizontalPassageWidth;
-	const int knX2 = (knRoomWidth / 2) - (knVerticalPassageWidth / 2);
-	const int knX3 = (knRoomWidth / 2) + (knVerticalPassageWidth / 2);
-	const int knX4 = knRoomWidth - knHorizontalPassageWidth;
-	const int knX5 = knRoomWidth;
-	const int knY0 = 0;
-	const int knY1 = knVerticalPassageHeight;
-	const int knY2 = (knRoomHeight / 2) - (knHorizontalPassageHeight / 2);
-	const int knY3 = (knRoomHeight / 2) + (knHorizontalPassageHeight / 2);
-	const int knY4 = knRoomHeight - knVerticalPassageHeight;
-	const int knY5 = knRoomHeight;
-
-	// Load models.
-	const Model& kWorldModel = Resourcex::loadModel(_T("world"));
-	const Model& kUserModel = Resourcex::loadModel(_T("user"));
-
-	// Create world entity.
-	{
-		Entity& entity = Game::spawnEntity();
-		entity.setModel(const_cast<Model*>(&kWorldModel));
-		entity.setMobile(false);
-		entity.getColour() = Vec3(127, 127, 127);
-		entity.setBounds(kWorldModel.getBounds());
-	}
-
-	// Create user entities.
-	{
-		const int knXOff = 0;
-		const int knYOff = 0;
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX2 + 0, knYOff + knY2 + 5);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX2 + 1, knYOff + knY3 + 3);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX3 + 3, knYOff + knY2 + 1);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX3 + 5, knYOff + knY3 + 0);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-	}
-	{
-		const int knXOff = -240;
-		const int knYOff = 0;
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX2 + 0, knYOff + knY2 + 5);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX2 + 1, knYOff + knY3 + 3);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX3 + 3, knYOff + knY2 + 1);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX3 + 5, knYOff + knY3 + 0);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-	}
-	{
-		const int knXOff = -240;
-		const int knYOff = -320;
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX2 + 0, knYOff + knY2 + 5);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX2 + 1, knYOff + knY3 + 3);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX3 + 3, knYOff + knY2 + 1);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX3 + 5, knYOff + knY3 + 0);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-	}
-	{
-		const int knXOff = 0;
-		const int knYOff = -320;
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX2 + 0, knYOff + knY2 + 5);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX2 + 1, knYOff + knY3 + 3);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX3 + 3, knYOff + knY2 + 1);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-		{
-			Entity& entity = Game::spawnEntity();
-			entity.setModel(const_cast<Model*>(&kUserModel));
-			entity.getColour() = Vec3(255, 0, 255);
-			entity.getOrigin() = Vec2(knXOff + knX3 + 5, knYOff + knY3 + 0);
-			entity.getVelocity() = Vec2(2, 2);
-			World::linkEntity(entity);
-		}
-	}
-#endif
+	// Menu.
+	Menu::clearCurrentMenu();
 }
 
 
@@ -975,7 +304,7 @@ Game::physics(
 
 	int nCollisionCount = 0;
 
-	while (fTimeRemaining)
+	while ((int)fTimeRemaining != 0)
 	{
 		World::unlinkEntity(entity);
 
@@ -1063,7 +392,7 @@ Game::physics(
 				}
 			}
 			else if (collision.m_pEntity->isMobile() &&
-				collision.m_pEntity->getType().getName() != tstring(_T("path")))
+				collision.m_pEntity->getType().getName() == tstring(_T("monster")))
 			{
 				const bool bStuck =
 					resolveCollision(collision, entity, *collision.m_pEntity);
@@ -1186,7 +515,8 @@ Game::runEntity(
 		if (&entity != Game::getActiveEntity() &&
 			entity.getType().getName() == tstring(_T("player")))
 		{
-			const scalar kfSpeedLimit = 16;
+			const scalar kfSpeedLimit =
+				Variable::physics_speed_limit.getFloatValue();
 			scalar fSpeed =
 				sqrt(entity.getVelocity() % entity.getVelocity());
 			if (kfSpeedLimit < fSpeed)
@@ -1194,7 +524,7 @@ Game::runEntity(
 				entity.getVelocity() *= kfSpeedLimit / fSpeed;
 			}
 			// Friction.
-			entity.getVelocity() *= 0.99f;
+			entity.getVelocity() *= Variable::physics_friction.getFloatValue();
 			scalar fNewSpeed =
 				sqrt(entity.getVelocity() % entity.getVelocity());
 			if (fNewSpeed < 0.1)
@@ -1233,6 +563,70 @@ Game::runEntity(
 			vVectorToPoint / fDistanceToPoint * entity.m_fPathSpeed;
 	}
 
+	// Hack here to add simple force support.
+	if (entity.getType().getName() == tstring(_T("force")))
+	{
+		// Get player entity
+		// See if it isn't controlled
+		// See if it is on force entity
+		// Add force vector to it
+
+		// TODO need API for doing this quickly
+		Entity* pPlayerEntity = 0;
+		for (int n = 0; n != Game::getNumberOfEntities(); ++n)
+		{
+			Entity& testEntity = Game::getEntity(n);
+			if (testEntity.getType().getName() == tstring(_T("player")))
+			{
+				pPlayerEntity = &testEntity;
+				break;
+			}
+		}
+
+		// Assume we found a player entity, of course, and that there is only
+		// one.
+		// This uses seek and arrival steering behaviour.
+		// TODO check physics book for proper force application.
+		// TODO this needs a poly-to-poly intersection test
+		// TODO currently it uses the player's origin which may not be in the
+		//      model
+		if (!Game::getActiveEntity() &&
+			pPlayerEntity->m_nForceFrame + 30 <
+				ProgramState::getCurrentFrame() &&
+			World::isPointInEntity(
+				pPlayerEntity->getOrigin(),
+				entity))
+		{
+			Vec2 vTargetOffset =
+				entity.m_vForcePoint - pPlayerEntity->getOrigin();
+			scalar fDistance =
+				sqrt(vTargetOffset % vTargetOffset);
+			scalar fRampedSpeed =
+				entity.m_fForceSpeed *
+				(fDistance / (entity.m_fForceSpeed * 10));
+			scalar fClippedSpeed =
+				fRampedSpeed < entity.m_fForceSpeed ?
+					fRampedSpeed :
+					entity.m_fForceSpeed;
+			// This is the "desired velocity"
+			Vec2 vDesiredVelocity =
+				fDistance != 0 ?
+					(fClippedSpeed / fDistance) *
+					vTargetOffset :
+				Vec2(0, 0);
+			Vec2 vSteering =
+				vDesiredVelocity - pPlayerEntity->getVelocity();
+			if (fDistance < entity.m_fForceSpeed)
+			{
+				pPlayerEntity->getVelocity() = Vec2(0, 0);
+			}
+			else
+			{
+				pPlayerEntity->getVelocity() += vSteering;
+			}
+		}
+	}
+
 	physics(entity);
 
 	// TODO runThink
@@ -1256,16 +650,6 @@ Game::runFrame()
 		Game::getFrame(),
 		Game::getChecksum());
 	checkIntegrity();
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-void
-Game::setActiveEntity(
-	Entity* pEntity)
-{
-	m_pActiveEntity = pEntity;
 }
 
 

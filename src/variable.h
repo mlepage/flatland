@@ -34,6 +34,8 @@ public:
 #define DECL_VAR(name) static Variable name
 	DECL_VAR(file_base_dir);
 	DECL_VAR(first_level);
+	DECL_VAR(physics_friction);
+	DECL_VAR(physics_speed_limit);
 	DECL_VAR(render_brush_bounds);
 	DECL_VAR(render_brush_outline);
 	DECL_VAR(render_entity_bounds);
