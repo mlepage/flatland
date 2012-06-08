@@ -2,7 +2,7 @@ entity
 {
 	type = world
 	colour = <0, 0, 255>
-	model_name = alpha-2
+	model_name = alpha-2-w
 	anim
 	{
 		image_name = alpha-2

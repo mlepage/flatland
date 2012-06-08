@@ -100,7 +100,7 @@ Screen::drawMenu()
 			const Rect krBounds = kItem.getBounds();
 			COLORREF dwColor =
 				n == Menu::getCurrentItem() ?
-					RGB(255, 0, 0) :
+					RGB(128, 128, 255) :
 					RGB(0, 0, 255);
 			Render::drawLine(
 				krBounds.getMin()[0],

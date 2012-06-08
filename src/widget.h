@@ -13,11 +13,44 @@
 #include "tstring.h"
 
 
-class WidgetDialog;
+typedef COLORREF WColour;
+typedef CGapiSurface WSurface;
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
+class Colour
+{
+
+public:
+
+	static
+	WColour
+	black()
+	{
+		return RGB(0, 0, 0);
+	}
+
+	static
+	WColour
+	highlight()
+	{
+		return RGB(128 + 64, 128 + 64, 0);
+	}
+
+	static
+	WColour
+	white()
+	{
+		return RGB(255, 255, 255);
+	}
+
+
+};
+
+
+/*******************************************************************************
+*******************************************************************************/
 class WPoint
 {
 
@@ -83,7 +116,7 @@ private:
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 class WDim
 {
 
@@ -140,7 +173,7 @@ private:
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 class WRect
 {
 
@@ -285,7 +318,7 @@ private:
 /*******************************************************************************
 	Geometry is in the coordinate system of the parent; global geometry is in
 	the global coordinate system.
-******************************************************************************/
+*******************************************************************************/
 class Widget : public sigslot::has_slots<>
 {
 
@@ -308,6 +341,10 @@ public:
 
 	static
 	void
+	dispatchEventProcess();
+
+	static
+	void
 	dispatchEventStylusDoubleClick(
 		const WPoint& kScreenPosition);
 
@@ -327,10 +364,31 @@ public:
 		const WPoint& kScreenPosition);
 
 	static
-	CGapiSurface&
+	Widget&
+	getActiveWindow()
+	{
+		return *m_pActiveWindow;
+	}
+
+	static
+	WSurface&
 	getBackBuffer()
 	{
 		return *m_pBackBuffer;
+	}
+
+	static
+	Widget&
+	getFocusWidget()
+	{
+		return *m_pFocusWidget;
+	}
+
+	static
+	bool
+	hasActiveWindow()
+	{
+		return m_pActiveWindow != 0;
 	}
 
 	// This is basically a hack for now to determine whether to send events to
@@ -339,44 +397,48 @@ public:
 	bool
 	isOtherEventDispatchingEnabled()
 	{
-		return m_cpVisibleDialog.size() == 0;
+		return m_pActiveWindow == 0;
+	}
+
+	static
+	void
+	setActiveWindow(
+		Widget& widget)
+	{
+		m_pActiveWindow = &widget;
 	}
 
 	static
 	void
 	setBackBuffer(
-		CGapiSurface& backBuffer)
+		WSurface& backBuffer)
 	{
 		m_pBackBuffer = &backBuffer;
-	}
-
-	static
-	void
-	setFocusWidget(
-		Widget& widget)
-	{
-		m_pFocusWidget = &widget;
 	}
 
 
 public:
 
 	Widget() :
-		m_pParent(0),
-		m_bEnabled(false),
-		m_bVisible(false),
-		m_bHidden(false)
+		m_pParent(0)
 	{
+		constructCommon();
+		addTopLevelWidget(*this);
+	}
+
+	Widget(
+		const tstring& ksName) :
+		m_pParent(0)
+	{
+		constructCommon();
 		addTopLevelWidget(*this);
 	}
 
 	Widget(
 		Widget& parent) :
-		m_pParent(&parent),
-		m_bEnabled(false),
-		m_bVisible(false),
-		m_bHidden(false)
+		m_pParent(&parent)
 	{
+		constructCommon();
 		parent.addChild(*this);
 	}
 
@@ -384,11 +446,9 @@ public:
 		Widget& parent,
 		const tstring& ksName) :
 		m_pParent(&parent),
-		m_sName(ksName),
-		m_bEnabled(false),
-		m_bVisible(false),
-		m_bHidden(false)
+		m_sName(ksName)
 	{
+		constructCommon();
 		parent.addChild(*this);
 	}
 
@@ -396,6 +456,13 @@ public:
 	{
 		// TODO Clean up.
 	}
+
+	Widget*
+	findGlobalChild(
+		const WPoint& kPosition);
+
+	void
+	focusNext();
 
 	WRect
 	getBounds() const
@@ -474,6 +541,17 @@ public:
 		return m_size;
 	}
 
+	Widget&
+	getTopLevelAncestor()
+	{
+		Widget* pWidget = this;
+		while (!pWidget->isTopLevel())
+		{
+			pWidget = &pWidget->getParent();
+		}
+		return *pWidget;
+	}
+
 	int
 	getWidth() const
 	{
@@ -490,6 +568,12 @@ public:
 	getY() const
 	{
 		return m_position.getY();
+	}
+
+	void
+	grabKeyboard()
+	{
+		Widget::m_pGrabKeyboardWidget = this;
 	}
 
 	bool
@@ -511,6 +595,12 @@ public:
 	isEnabled() const
 	{
 		return m_bEnabled;
+	}
+
+	bool
+	isFocusEnabled() const
+	{
+		return m_bFocusEnabled;
 	}
 
 	bool
@@ -539,6 +629,15 @@ public:
 	}
 
 	void
+	raise();
+
+	void
+	releaseKeyboard()
+	{
+		Widget::m_pGrabKeyboardWidget = 0;
+	}
+
+	void
 	setBounds(
 		const WRect& kBounds)
 	{
@@ -552,6 +651,10 @@ public:
 	{
 		m_bEnabled = kbEnabled;
 	}
+
+	void
+	setFocusEnabled(
+		const bool kbFocusEnabled);
 
 	void
 	setHeight(
@@ -654,16 +757,19 @@ public:
 
 protected:
 
-	static
+	// Not used.
+	virtual
 	void
-	addDialog(
-		WidgetDialog& dialog)
-	{
-		m_cpDialog.push_back(&dialog);
-	}
+	eventFocusIn() {};
 
+	// Not used.
+	virtual
+	void
+	eventFocusOut() {};
 
-protected:
+	virtual
+	void
+	eventHide() {};
 
 	virtual
 	void
@@ -678,6 +784,14 @@ protected:
 	virtual
 	void
 	eventPaint() {};
+
+	virtual
+	void
+	eventProcess() {};
+
+	virtual
+	void
+	eventShow() {};
 
 	virtual
 	void
@@ -710,22 +824,24 @@ private:
 		m_cpTopLevelWidget.push_back(&widget);
 	}
 
+	static
+	void
+	updateActiveWindow();
+
 
 private:
 
-	static CGapiSurface* m_pBackBuffer;
+	static WSurface* m_pBackBuffer;
 
 	// PERF If performance checking for visibility seems to be an issue, I can
 	// just maintain a separate list of visible top level widgets.
 	static std::vector<Widget*> m_cpTopLevelWidget;
 
-	// Let's say for the sake of argument that all dialogs are treated as
-	// modal, full screen. If a dialog is present, the top one gets all the
-	// events, until it is dismissed.
-	static std::vector<WidgetDialog*> m_cpDialog;
-	static std::vector<WidgetDialog*> m_cpVisibleDialog;
+	static Widget* m_pActiveWindow;
 
 	static Widget* m_pFocusWidget;
+
+	static Widget* m_pGrabKeyboardWidget;
 
 
 private:
@@ -741,10 +857,19 @@ private:
 	}
 
 	void
+	constructCommon();
+
+	Widget&
+	getFocusWidgetForTree();
+
+	void
 	hideChildren();
 
 	void
 	paintChildren();
+
+	void
+	processChildren();
 
 	void
 	setGlobalPosition(
@@ -775,6 +900,7 @@ private:
 private:
 
 	Widget* m_pParent;
+	// Children in z-order, so last child is on top.
 	std::vector<Widget*> m_cpChild;
 	tstring m_sName;
 
@@ -783,9 +909,15 @@ private:
 	WPoint m_position;
 	WDim m_size;
 
+	// Focus. (Only for top level widgets.)
+	int m_nFocusWidgetIndex;
+	std::vector<Widget*> m_cpFocusWidget;
+
 	bool m_bEnabled;
 	bool m_bVisible;
 	bool m_bHidden;
+	bool m_bFocusEnabled;
+
 
 };
 

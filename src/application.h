@@ -1,21 +1,28 @@
+// Flatland.
+// Copyright (C) 2003 Marc A. Lepage.
+
+
 #ifndef GUARD__APPLICATION
 #define GUARD__APPLICATION
 
 
+#include "sigslot.h"
 #include "GapiApplication.h"
+
 #include "matrix.h"
 
 
 class ApplicationState;
 class WidgetFileDialog;
+class WidgetMainWindow;
+class WidgetMessageDialog;
 
 
 /*******************************************************************************
 	The main class to run this application. Most functionality is inherited
 	from the base class.
 *******************************************************************************/
-class Application :
-	public CGapiApplication
+class Application : public CGapiApplication
 {
 
 public:
@@ -38,10 +45,15 @@ public:
 
 	static
 	WidgetFileDialog&
-	getFileDialog()
-	{
-		return *m_pFileDialog;
-	}
+	getFileDialog();
+
+	static
+	WidgetMainWindow&
+	getModelEditorMainWindow();
+
+	static
+	WidgetMessageDialog&
+	getSaveChangesDialog();
 
 	static
 	HRESULT
@@ -51,6 +63,15 @@ public:
 	static
 	bool
 	isScrollViewEnabled();
+
+	// Change to quitting state.
+	static
+	void
+	quit();
+
+	static
+	void
+	screenShot();
 
 	// TODO This needs a proper home. Refactor first.
 	static
@@ -104,11 +125,15 @@ private:
 	void
 	changeState(
 		ApplicationState& state);
-
+	
 	static
 	bool
 	isState(
 		ApplicationState& state);
+
+	static
+	void
+	makeWidgets();
 
 
 private:
@@ -120,7 +145,11 @@ private:
 
 	static bool m_bScrollViewEnabled;
 
+	// Widgets.
+	static WidgetMainWindow* m_pModelEditorMainWindow;
 	static WidgetFileDialog* m_pFileDialog;
+	static WidgetMessageDialog* m_pSaveChangesDialog;
+
 
 };
 

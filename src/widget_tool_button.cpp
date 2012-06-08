@@ -11,26 +11,61 @@
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 WidgetToolButton::drawButton()
 {
-	// TODO Fix this.
-	RECT screenRect = reinterpret_cast<const RECT&>(getGlobalBounds());
-	getBackBuffer().FillRect(
-		&screenRect,
-		RGB(0, 0, 255),
-		0,
-		NULL);
+	WidgetButton::drawButton();
 
-	// Use name for now.
-	getBackBuffer().DrawText(
-		getGlobalX() + getBounds().getWidth() / 2,
-		getGlobalY() + getBounds().getHeight() / 2 - 2,
-		getName().c_str(),
-		Screen::getSystemFont(),
-		GDDRAWTEXT_CENTER,
-		NULL,
-		0,
-		NULL);
+	if (!hasIconSet())
+	{
+		return;
+	}
+
+	const int knImageIndex =
+		isDown() ? 2 : 0;
+
+	const int knWidth = getIconSet().GetWidth() / 3;
+	const int knHeight = getIconSet().GetHeight();
+
+	RECT sourceRect;
+	sourceRect.top = 0;
+	sourceRect.bottom = knHeight;
+	sourceRect.left = knImageIndex * knWidth;
+	sourceRect.right = (knImageIndex + 1) * knWidth;
+
+	if (!isEnabled())
+	{
+		GDBLTFASTFX fx;
+		fx.dwFillColor = RGB(0, 0, 96);
+		getBackBuffer().BltFast(
+			getGlobalX(),
+			getGlobalY(),
+			&getIconSet(),
+			&sourceRect,
+			GDBLTFAST_COLORFILL | GDBLTFAST_KEYSRC,
+			&fx);
+	}
+	else if (isToggleButton() && isOn() && !isDown())
+	{
+		GDBLTFASTFX fx;
+		fx.dwFillColor = Colour::highlight();
+		getBackBuffer().BltFast(
+			getGlobalX(),
+			getGlobalY(),
+			&getIconSet(),
+			&sourceRect,
+			GDBLTFAST_COLORFILL | GDBLTFAST_KEYSRC,
+			&fx);
+	}
+	else
+	{
+		getBackBuffer().BltFast(
+			getGlobalX(),
+			getGlobalY(),
+			&getIconSet(),
+			&sourceRect,
+			GDBLTFAST_KEYSRC,
+			NULL);
+	}
 }

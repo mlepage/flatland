@@ -7,6 +7,7 @@
 
 
 #include <vector>
+#include "GapiDraw.h"
 
 
 /*******************************************************************************
@@ -32,17 +33,26 @@ public:
 	static
 	bool
 	isKeyDown(
-		const KeyCode knKeyCode);
+		const int knKeyCode)
+	{
+		return m_cbKeyDown[knKeyCode];
+	}
 
 	static
 	void
 	keyDown(
-		const KeyCode knKeyCode);
+		const int knKeyCode)
+	{
+		m_cbKeyDown[knKeyCode] = true;
+	}
 
 	static
 	void
 	keyUp(
-		const KeyCode knKeyCode);
+		const int knKeyCode)
+	{
+		m_cbKeyDown[knKeyCode] = false;
+	}
 
 	static
 	void
@@ -52,7 +62,100 @@ public:
 private:
 
 	static
-	std::vector<bool> m_cbKeyState;
+	std::vector<bool> m_cbKeyDown;
+
+
+};
+
+
+/*******************************************************************************
+*******************************************************************************/
+class KeyCode
+{
+
+public:
+
+	static
+	int
+	control()
+	{
+		return m_knControl;
+	}
+
+	static
+	int
+	down()
+	{
+		return m_knDown;
+	}
+
+	static
+	int
+	enter()
+	{
+		return m_knEnter;
+	}
+
+	static
+	int
+	left()
+	{
+		return m_knLeft;
+	}
+
+	static
+	int
+	menu()
+	{
+		return m_knMenu;
+	}
+
+	static
+	void
+	restoreDefaults(
+		GDKEYLIST& keyList);
+
+	static
+	int
+	right()
+	{
+		return m_knRight;
+	}
+
+	static
+	int
+	screenShot()
+	{
+		return m_knScreenShot;
+	}
+
+	static
+	int
+	shift()
+	{
+		return m_knShift;
+	}
+
+	static
+	int
+	up()
+	{
+		return m_knUp;
+	}
+
+
+private:
+
+	static int m_knEnter;
+	static int m_knUp;
+	static int m_knDown;
+	static int m_knLeft;
+	static int m_knRight;
+	static int m_knMenu;
+	static int m_knScreenShot;
+	static int m_knControl;
+	static int m_knShift;
+
 
 };
 

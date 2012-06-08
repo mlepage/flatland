@@ -9,57 +9,115 @@
 #include "widget.h"
 
 
+class WidgetPushButton;
+
+
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 class WidgetDialog : public Widget
 {
 
 
 public:
 
-	WidgetDialog() :
-		m_bModal(false)
+	WidgetDialog()
 	{
-		Widget::addDialog(*this);
-		setSize(WDim(240, 320));
+		constructCommon();
+	}
+
+	WidgetDialog(
+		const tstring& ksName) :
+		Widget(ksName)
+	{
+		constructCommon();
 	}
 
 	WidgetDialog(
 		Widget& parent) :
-		Widget(parent),
-		m_bModal(false)
+		Widget(parent)
 	{
-		Widget::addDialog(*this);
-		setSize(WDim(240, 320));
+		constructCommon();
 	}
 
 	WidgetDialog(
 		Widget& parent,
 		const tstring& ksName) :
-		Widget(parent, ksName),
-		m_bModal(false)
+		Widget(parent, ksName)
 	{
-		Widget::addDialog(*this);
-		setSize(WDim(240, 320));
-	}
-
-	bool
-	isModal() const
-	{
-		return m_bModal;
+		constructCommon();
 	}
 
 	void
-	setModal(
-		const bool kbModal)
+	hideRejectButton();
+
+	void
+	setAcceptButtonText(
+		const tstring& ksText);
+
+	void
+	setCancelButtonText(
+		const tstring& ksText);
+
+	void
+	setRejectButtonText(
+		const tstring& ksText);
+
+	virtual
+	void
+	slotHide()
 	{
-		m_bModal = kbModal;
+		hide();
+	}
+
+
+public:
+
+	sigslot::signal0<> accepted;
+
+	sigslot::signal0<> cancelled;
+
+	sigslot::signal0<> rejected;
+
+
+protected:
+
+	// TODO This really should just respond to move and resize events.
+	void
+	layoutButtons();
+
+
+private:
+
+	void
+	constructCommon();
+
+	void
+	fireAccepted()
+	{
+		accepted();
+	}
+
+	void
+	fireCancelled()
+	{
+		cancelled();
+	}
+
+	void
+	fireRejected()
+	{
+		rejected();
 	}
 
 
 private:
 
-	bool m_bModal;
+	WidgetPushButton* m_pButtonAccept;
+
+	WidgetPushButton* m_pButtonCancel;
+
+	WidgetPushButton* m_pButtonReject;
+
 
 };
 

@@ -45,6 +45,19 @@ StateGame::enterState()
 	// Load level.
 	Console::print(_T("Loading level\n"));
 	Resourcex::loadLevel(Variable::first_level.getValue());
+
+	// Center view on player entity.
+	for (int n = 0; n != Game::getNumberOfEntities(); ++n)
+	{
+		Entity& testEntity = Game::getEntity(n);
+		if (testEntity.getType().getName() == tstring(_T("player")))
+		{
+			View::setWorldViewOrigin(
+				testEntity.getOrigin() -
+					View::getViewSize() / 2);
+			break;
+		}
+	}
 }
 
 

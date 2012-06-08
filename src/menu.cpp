@@ -8,10 +8,11 @@
 #include "menu.h"
 
 #include "game.h"
-#include "state_editor.h"
+#include "resourcex.h"
 #include "state_nag.h"
 #include "state_title.h"
 #include "widget_file_dialog.h" // for showing file dialog
+#include "widget_main_window.h"
 
 
 #define DEF_VAR(name) Menu Menu::name(_T(#name))
@@ -32,46 +33,6 @@ namespace
 {
 
 
-struct CompileModelCommand : public Command, sigslot::has_slots<>
-{
-	void
-	accepted()
-	{
-		disconnect_all();
-		StateEditor::compileModel(
-			Application::getFileDialog().getSelectedFileName());
-	}	
-	void
-	cancelled()
-	{
-		disconnect_all();
-	}	
-	virtual
-	void
-	execute()
-	{
-		Application::getFileDialog().accepted.connect(this,
-			&CompileModelCommand::accepted);
-		Application::getFileDialog().cancelled.connect(this,
-			&CompileModelCommand::cancelled);
-		Application::getFileDialog().show();
-		Menu::clearCurrentMenu();
-	};
-} compileModelCommand;
-
-
-struct EditorCommand : public Command
-{
-	virtual
-	void
-	execute()
-	{
-		StateEditor::changeState();
-		Menu::clearCurrentMenu();
-	};
-} editorCommand;
-
-
 struct EndGameCommand : public Command
 {
 	virtual
@@ -81,6 +42,28 @@ struct EndGameCommand : public Command
 		Game::endGame();
 	};
 } endGameCommand;
+
+
+struct levelEditorCommand : public Command
+{
+	virtual
+	void
+	execute()
+	{
+	};
+} levelEditorCommand;
+
+
+struct modelEditorCommand : public Command
+{
+	virtual
+	void
+	execute()
+	{
+		Application::getModelEditorMainWindow().show();
+		Menu::clearCurrentMenu();
+	};
+} modelEditorCommand;
 
 
 struct NewGameCommand : public Command
@@ -151,8 +134,8 @@ Menu::init()
 {
 	// TODO There is an order of evaluation problem here.
 	// Don't use this technique.
-	const int knX1 = 10;
-	const int knX2 = 100;
+	const int knX1 = 120;
+	const int knX2 = 220;
 	const int knY = 110;
 	const int knHeight = 20;
 	const int knVSpace = 10;
@@ -182,18 +165,18 @@ Menu::init()
 		rBounds.getMin()[1] += knHeight + knVSpace;
 		rBounds.getMax()[1] += knHeight + knVSpace;
 		Menu::Item item(
-			_T("editor"),
+			_T("model editor"),
 			rBounds,
-			editorCommand);
+			modelEditorCommand);
 			Menu::title_main.addItem(item);
 	}
 	{
 		rBounds.getMin()[1] += knHeight + knVSpace;
 		rBounds.getMax()[1] += knHeight + knVSpace;
 		Menu::Item item(
-			_T("options"),
+			_T("level editor"),
 			rBounds,
-			nullCommand);
+			levelEditorCommand);
 		Menu::title_main.addItem(item);
 	}
 	{
@@ -235,54 +218,4 @@ Menu::init()
 			quitCommand);
 		Menu::game_main.addItem(item);
 	}
-
-	// Editor.
-	rBounds = Rect(Vec2(knX1, knY), Vec2(knX2, knY + knHeight));
-	{
-		rBounds.getMin()[1] += knHeight + knVSpace;
-		rBounds.getMax()[1] += knHeight + knVSpace;
-		Menu::Item item(
-			_T("load model"),
-			rBounds,
-			nullCommand);
-		Menu::editor.addItem(item);
-	}
-	{
-		rBounds.getMin()[1] += knHeight + knVSpace;
-		rBounds.getMax()[1] += knHeight + knVSpace;
-		Menu::Item item(
-			_T("save model"),
-			rBounds,
-			nullCommand);
-		Menu::editor.addItem(item);
-	}
-	{
-		rBounds.getMin()[1] += knHeight + knVSpace;
-		rBounds.getMax()[1] += knHeight + knVSpace;
-		Menu::Item item(
-			_T("compile model"),
-			rBounds,
-			compileModelCommand);
-		Menu::editor.addItem(item);
-	}
-	{
-		rBounds.getMin()[1] += knHeight + knVSpace;
-		rBounds.getMax()[1] += knHeight + knVSpace;
-		Menu::Item item(
-			_T("leave editor"),
-			rBounds,
-			titleCommand);
-		Menu::editor.addItem(item);
-	}
-	{
-		rBounds.getMin()[1] += knHeight + knVSpace;
-		rBounds.getMax()[1] += knHeight + knVSpace;
-		Menu::Item item(
-			_T("quit"),
-			rBounds,
-			quitCommand);
-		Menu::editor.addItem(item);
-	}
-
-	// Options.
 }

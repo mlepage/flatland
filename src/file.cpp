@@ -57,3 +57,16 @@ File::openFile(
 
 	return kpFile;
 }
+
+
+/*******************************************************************************
+*******************************************************************************/
+FILE*
+File::openFileNoException(
+	const tstring& ksName,
+	const tstring& ksMode)
+{
+	FILE* const kpFile =
+		_tfopen(makeFileName(ksName).c_str(), ksMode.c_str());
+	return kpFile;
+}

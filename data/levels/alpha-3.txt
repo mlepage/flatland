@@ -1,0 +1,307 @@
+entity
+{
+	type = world
+	colour = <0, 0, 255>
+	model_name = alpha-3-w
+	anim
+	{
+		image_name = world-alpha-3
+		size = <667, 592>
+		frame
+		{
+			index = 0
+			count = 30
+		}
+	}
+}
+entity
+{
+	type = control
+	colour = <255, 0, 255>
+	model_name = alpha-3-c1
+}
+entity
+{
+	type = control
+	colour = <255, 0, 255>
+	model_name = alpha-3-c2
+}
+entity
+{
+	type = force
+	colour = <255, 0, 255>
+	model_name = alpha-3-c1
+	force_speed = 4
+	force_point = <336, 180>
+}
+entity
+{
+	type = force
+	colour = <255, 0, 255>
+	model_name = alpha-3-c2
+	force_speed = 4
+	force_point = <428, 270>
+}
+entity
+{
+	type = player
+	colour = <255, 255, 0>
+	mobile = 1
+	model_name = ufo
+	anim
+	{
+		image_name = ufo-gold
+		size = <20, 20>
+		frame
+		{
+			index = 0
+			count = 30
+		}
+	}
+	position = <336, 180>
+}
+entity
+{
+	type = path
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = ufo
+	anim
+	{
+		image_name = ufo-gold2
+		size = <20, 20>
+		frame
+		{
+			index = 0
+			count = 30
+		}
+	}
+	position = <264, 274>
+	path_speed = 2
+	path_point = <264, 274>
+	path_point = <296, 246>
+	path_point = <392, 310>
+	path_point = <364, 346>
+}
+# Group
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <150, 200>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <150, 150>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <200, 200>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <200, 150>
+}
+# Group
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <450, 400>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <450, 450>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <500, 400>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <500, 450>
+}
+# Group
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <70, 136>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <82, 168>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <88, 204>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <106, 244>
+}
+# Group
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <584, 478>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <576, 448>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <566, 410>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <558, 360>
+}
+# Group
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <534, 522>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <492, 528>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <460, 528>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <418, 526>
+}
+# Group
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <104, 76>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <138, 70>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <182, 74>
+}
+entity
+{
+	type = block
+	colour = <255, 0, 0>
+	mobile = 1
+	model_name = diamond
+	anim_name = diamond
+	position = <226, 78>
+}

@@ -34,6 +34,12 @@ public:
 		const tstring& ksName,
 		const tstring& ksMode);
 
+	static
+	FILE*
+	openFileNoException(
+		const tstring& ksName,
+		const tstring& ksMode);
+
 
 };
 

@@ -38,6 +38,13 @@ public:
 	getTransformS2W();
 
 	static
+	Vec2
+	getViewSize()
+	{
+		return m_rWorldView.getMax() - m_rWorldView.getMin();
+	}
+
+	static
 	const Rect&
 	getWorldView();
 

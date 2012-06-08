@@ -10,6 +10,33 @@ Windows executables are provided for each milestone release. Instructions are in
 Release History
 ===============
 
+Milestone 8 - Oct 30, 2003
+--------------------------
+
+M8 is the "even more editor and widget toolkit" milestone. At this point I should clarify that the editor I've been mis-calling a "level editor" is actually a "model editor," and that a level editor is yet to come.
+
+The only new feature that isn't part of the model editor is the ability to take a screenshot. They will be saved in "data/screenshots" as "screenshot 1," "screenshot 2," and so on to "screenshot 99."
+
+The biggest change in this release is that the model editor has been converted to use the widget toolkit. Compared to M7, some functionality is lost, and some is gained.
+
+Using the menu, you can now load/save/saveas models, and also compile them to "gameplay" models (of the same name). You will be prompted to save changes when necessary. You will NOT be asked to confirm a file overwrite, so make sure your file name is OK. Most of these dialogs are new to this release.
+
+The world model "alpha-2" has been recreated using the model editor. An additional, larger, more complex world model "alpha-3" has been created to further test the model editor.
+
+Two new menu options allow you to load an image in the model editor, and place its origin. These settings are not saved with the model, but are only there to assist in placing the model's points in the editor.
+
+The toolbar has been streamlined to five buttons. The first two are the select/move mode and new point mode, as in M7. The next two create a polygon or an inverse polygon from existing points/lines, as in M7. The fifth button, delete, is new to M8. It deletes selected points, and also any lines/polygons using them. This can leave extra lines or points, which will be saved with the model, but omitted when compiling a "gameplay" model.
+
+Only points can be selected, but selection itself is greatly improved. Shift and control work as expected, whether on a single point or in a lasso.
+
+Program controls are currently:
+
+Menu: access with ESC, use with ARROWS/ENTER (some screens only) or mouse.
+Scrolling: use ARROWS; ENTER toggles autoscroll (in game).
+CTRL key: multiple selection in editor; toggle rendering in game.
+SHIFT key: multiple selection in editor.
+S key: save a screenshot.
+
 Milestone 7 - Oct 12, 2003
 --------------------------
 

@@ -10,7 +10,9 @@
 
 
 /*******************************************************************************
-******************************************************************************/
+	Mini style guide: tool bar should be 24 pixels high, with buttons spaced
+	24 pixels apart. Buttons should be 22x22 pixels.
+*******************************************************************************/
 class WidgetToolBar : public Widget
 {
 
@@ -18,6 +20,12 @@ class WidgetToolBar : public Widget
 public:
 
 	WidgetToolBar()
+	{
+	};
+
+	WidgetToolBar(
+		const tstring& ksName) :
+		Widget(ksName)
 	{
 	};
 
@@ -33,6 +41,13 @@ public:
 		Widget(parent, ksName)
 	{
 	};
+
+
+protected:
+	
+	virtual
+	void
+	eventPaint();
 
 
 };

@@ -647,9 +647,8 @@ Game::runFrame()
 	++m_nFrame;
 
 	Screen::print(
-		_T("%d %p"),
-		Game::getFrame(),
-		Game::getChecksum());
+		_T("%d"),
+		Game::getFrame());
 	checkIntegrity();
 }
 

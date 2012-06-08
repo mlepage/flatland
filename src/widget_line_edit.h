@@ -10,7 +10,7 @@
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 class WidgetLineEdit : public Widget
 {
 
@@ -18,6 +18,12 @@ class WidgetLineEdit : public Widget
 public:
 
 	WidgetLineEdit()
+	{
+	}
+
+	WidgetLineEdit(
+		const tstring& ksName) :
+		Widget(ksName)
 	{
 	}
 

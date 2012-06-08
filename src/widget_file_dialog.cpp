@@ -15,7 +15,32 @@
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
+void
+WidgetFileDialog::constructCommon()
+{
+	hideRejectButton();
+	setAcceptButtonText(_T("OK"));
+
+	WidgetKeyboard& keyboard = *new WidgetKeyboard(*this, _T("keyboard"));
+	keyboard.setPosition(
+		WPoint((getWidth() - keyboard.getWidth()) / 2,
+			getHeight() - keyboard.getHeight() - 32));
+	keyboard.show();
+
+	WidgetLineEdit& lineEdit = *new WidgetLineEdit(*this, _T("line_edit"));
+	lineEdit.setBounds(
+		WRect(keyboard.getX(), keyboard.getY() - 24, keyboard.getWidth(), 16));
+	lineEdit.show();
+	m_pLineEdit = &lineEdit;
+
+	// Enable focus.
+	lineEdit.setFocusEnabled(true);
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
 void
 WidgetFileDialog::eventPaint()
 {
@@ -32,7 +57,7 @@ WidgetFileDialog::eventPaint()
 	getBackBuffer().DrawText(
 		8,
 		8,
-		_T("Save Model As"),
+		getCaption().c_str(),
 		Screen::getSystemFont(),
 		0,
 		NULL,
@@ -118,7 +143,7 @@ WidgetFileDialog::eventPaint()
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 const tstring&
 WidgetFileDialog::getSelectedFileName() const
 {
@@ -127,37 +152,10 @@ WidgetFileDialog::getSelectedFileName() const
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
-WidgetFileDialog::init()
+WidgetFileDialog::setFileName(
+	const tstring& ksFileName)
 {
-	WidgetKeyboard& keyboard = *new WidgetKeyboard(*this, _T("keyboard"));
-	keyboard.setPosition(
-		WPoint((getWidth() - keyboard.getWidth()) / 2,
-			getHeight() - keyboard.getHeight() - 32));
-	keyboard.show();
-
-	WidgetLineEdit& lineEdit = *new WidgetLineEdit(*this, _T("line_edit"));
-	lineEdit.setBounds(
-		WRect(keyboard.getX(), keyboard.getY() - 24, keyboard.getWidth(), 16));
-	lineEdit.show();
-	// TEMP Set focus, need to do this properly eventually.
-	Widget::setFocusWidget(lineEdit);
-	m_pLineEdit = &lineEdit;
-
-	WidgetPushButton& buttonCancel = *new WidgetPushButton(*this, _T("Cancel"));
-	buttonCancel.setBounds(
-		WRect(120 - 32 + 64 + 12, 320 - 24, 64, 16));
-	buttonCancel.show();
-
-	WidgetPushButton& buttonOK = *new WidgetPushButton(*this, _T("OK"));
-	buttonOK.setBounds(
-		WRect(120 - 32, 320 - 24, 64, 16));
-	buttonOK.show();
-
-	// Connect signals/slots.
-	buttonCancel.clicked.connect(this, &WidgetFileDialog::slotHide);
-	buttonCancel.clicked.connect(this, &WidgetFileDialog::fireCancelled);
-	buttonOK.clicked.connect(this, &WidgetFileDialog::slotHide);
-	buttonOK.clicked.connect(this, &WidgetFileDialog::fireAccepted);
+	m_pLineEdit->setText(ksFileName);
 }

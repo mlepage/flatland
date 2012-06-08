@@ -24,7 +24,7 @@
 #include "screen.h"
 #include "shell.h"
 #include "state_game.h"
-#include "state_editor.h"
+#include "state_nag.h"
 #include "state_splash.h"
 #include "stylus.h"
 #include "test.h"
@@ -32,7 +32,15 @@
 #include "view.h"
 #include "widget.h"
 #include "widget_file_dialog.h"
+#include "widget_main_window.h"
+#include "widget_menu_bar.h"
+#include "widget_message_dialog.h"
+#include "widget_push_button.h"
+#include "widget_tool_bar.h"
+#include "widget_tool_button.h"
 #include "world.h"
+#include "editor/model_editor.h"
+
 
 // TEST Testing a bunch of widget and signals/slots stuff.
 struct SlotTester : public sigslot::has_slots<>
@@ -71,8 +79,12 @@ Application::m_nFrameNumber = 0;
 bool
 Application::m_bScrollViewEnabled = false;
 
+WidgetMainWindow*
+Application::m_pModelEditorMainWindow;
 WidgetFileDialog*
 Application::m_pFileDialog;
+WidgetMessageDialog*
+Application::m_pSaveChangesDialog;
 
 
 // TODO This needs a proper home but refactor first.
@@ -175,6 +187,294 @@ WinMain(
 
 /*******************************************************************************
 *******************************************************************************/
+WidgetFileDialog&
+Application::getFileDialog()
+{
+	if (!m_pFileDialog)
+	{
+		m_pFileDialog = new WidgetFileDialog(_T("file_dialog"));
+	}
+
+	return *m_pFileDialog;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+WidgetMainWindow&
+Application::getModelEditorMainWindow()
+{
+	if (!m_pModelEditorMainWindow)
+	{
+		WDim buttonSize(120 - 32, 16);
+		int nX = 16;
+		int nYDelta = 24;
+		int nY = 8 - nYDelta;
+
+		m_pModelEditorMainWindow =
+			new WidgetMainWindow(_T("model_editor_main_window"));
+
+		// Contents.
+		ModelEditor& modelEditor =
+			*new ModelEditor(
+				*m_pModelEditorMainWindow,
+				_T("model_editor_contents"));
+		m_pModelEditorMainWindow->setContents(modelEditor);
+		modelEditor.setFocusEnabled(true);
+
+		// Menu bar.
+		WidgetMenuBar& menuBar =
+			*new WidgetMenuBar(
+				*m_pModelEditorMainWindow,
+				_T("model_editor_menu_bar"));
+		m_pModelEditorMainWindow->setMenuBar(menuBar);
+		menuBar.setHeight(menuBar.getHeight() + 32);
+		menuBar.setFocusEnabled(true);
+		menuBar.hide();
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("new_model"));
+			button.setText(_T("new model"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doNewModel);
+		}
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("load_model"));
+			button.setText(_T("load model"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doLoadModel);
+		}
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("save_model"));
+			button.setText(_T("save model"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doSaveModel);
+		}
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("save_model_as"));
+			button.setText(_T("save model as"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doSaveModelAs);
+		}
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("compile_model"));
+			button.setText(_T("compile model"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doCompileModel);
+		}
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("load_image"));
+			button.setText(_T("load image"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doLoadImage);
+		}
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("set_image_origin"));
+			button.setText(_T("set image origin"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doSetImageOrigin);
+		}
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("close_editor"));
+			button.setText(_T("close editor"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doClose);
+		}
+		{
+			WidgetPushButton& button =
+				*new WidgetPushButton(menuBar, _T("quit"));
+			button.setText(_T("quit"));
+			button.setBounds(WRect(WPoint(nX, nY += nYDelta), buttonSize));
+			button.clicked.connect(
+				&modelEditor, &ModelEditor::doQuit);
+		}
+
+		// Tool bar.
+		WidgetToolBar& toolBar =
+			*new WidgetToolBar(
+				*m_pModelEditorMainWindow,
+				_T("model editor tool bar"));
+		m_pModelEditorMainWindow->setToolBar(toolBar);
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T("tool_move"));
+			toolButton.setPosition(WPoint(24 * 0, 1));
+			toolButton.setIconSet(
+				Resourcex::getImage(_T("tool_move")).getSurface());
+			toolButton.setToggleButton(true);
+			toolButton.toggle();
+			toolButton.toggled.connect(
+				&modelEditor, &ModelEditor::toolToggle);
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T("tool_create_point"));
+			toolButton.setPosition(WPoint(24 * 1, 1));
+			toolButton.setIconSet(
+				Resourcex::getImage(_T("tool_create_point")).getSurface());
+			toolButton.setToggleButton(true);
+			toolButton.toggled.connect(
+				&modelEditor, &ModelEditor::toolToggle);
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T("tool_create_polygon"));
+			toolButton.setPosition(WPoint(24 * 2, 1));
+			toolButton.setIconSet(
+				Resourcex::getImage(_T("tool_create_polygon")).getSurface());
+			toolButton.clicked.connect(
+				&modelEditor, &ModelEditor::doCreatePolygonFromSelectedPoints);
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar,
+					_T("tool_create_inverse_polygon"));
+			toolButton.setPosition(WPoint(24 * 3, 1));
+			toolButton.setIconSet(
+				Resourcex::getImage(
+					_T("tool_create_inverse_polygon")).getSurface());
+			toolButton.clicked.connect(
+				&modelEditor,
+				&ModelEditor::doCreateInversePolygonFromSelectedPoints);
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T("tool_delete"));
+			toolButton.setPosition(WPoint(24 * 4, 1));
+			toolButton.setIconSet(
+				Resourcex::getImage(_T("tool_delete")).getSurface());
+			toolButton.clicked.connect(
+				&modelEditor, &ModelEditor::doDeleteSelectedPoints);
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T(""));
+			toolButton.setPosition(WPoint(24 * 5, 1));
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T(""));
+			toolButton.setPosition(WPoint(24 * 6, 1));
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T(""));
+			toolButton.setPosition(WPoint(24 * 7, 1));
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T(""));
+			toolButton.setPosition(WPoint(24 * 8, 1));
+		}
+		{
+			WidgetToolButton& toolButton =
+				*new WidgetToolButton(toolBar, _T(""));
+			toolButton.setPosition(WPoint(24 * 9, 1));
+		}
+	}
+
+	return *m_pModelEditorMainWindow;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+WidgetMessageDialog&
+Application::getSaveChangesDialog()
+{
+	if (!m_pSaveChangesDialog)
+	{
+		m_pSaveChangesDialog =
+			new WidgetMessageDialog(_T("save_changes_dialog"));
+		m_pSaveChangesDialog->setText(_T("Save changes?"));
+	}
+
+	return *m_pSaveChangesDialog;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Application::makeWidgets()
+{
+	// TODO This function is no longer necessary. Remove it once I am satisfied
+	// that the signal/slot testing is OK.
+
+	// TEST Compilation of sigslot connections.
+	DerivedA derivedA;
+	DerivedB derivedB;
+	derivedA.sig.connect(&derivedB, &DerivedB::slot1);
+	//derivedA.sig.connect(&derivedB, &DerivedB::slot2);
+	derivedA.sig.connect(&derivedB, &DerivedB::slot3);
+	//derivedA.sig.connect(&derivedB, &DerivedB::slot4);
+	derivedB.slot2();
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Application::quit()
+{
+	// Hide whatever got us here.
+	Menu::clearCurrentMenu();
+	getModelEditorMainWindow().hide();
+
+	// Change to nag state.
+	StateNag::changeState();
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Application::screenShot()
+{
+	// TODO What if there are over 100 saved screenshots?
+	// TODO What if a file error occurs (e.g. directory doesn't exist?
+
+	// First, find a free file name.
+	tstring sFileName;
+	for (int n = 1; n != 100; ++n)
+	{
+		sFileName =
+			tstring(_T("data\\screenshots\\screenshot ")) +
+				toString(n) + tstring(_T(".png"));
+		FILE* pFile = File::openFileNoException(sFileName, _T("r"));
+		if (!pFile)
+		{
+			// Second, save the back buffer to that file name.
+			m_pApplication->m_backbuffer.SaveSurface(
+				File::makeFileName(sFileName).c_str(),
+				GDSAVESURFACE_PNG);
+			break;
+		}
+		else
+		{
+			File::closeFile(pFile);
+		}
+	}
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
 HRESULT
 Application::initAndRun(
 	HINSTANCE hInstance)
@@ -194,6 +494,7 @@ Application::initAndRun(
 	Test::test();
 #endif
 
+	makeWidgets();
 
 	// Load and execute the config file here, for now.
 	doConfigFile();
@@ -215,22 +516,16 @@ Application::initAndRun(
 	Console::print(_T("Creating application.\n"));
 	Application::m_pApplication = new Application(config);
 
+	{
+		GDKEYLIST keyList;
+		m_pApplication->m_input.GetKeyList(&keyList);
+		KeyCode::restoreDefaults(keyList);
+	}
+
 	Console::print(_T("Flatland initialized.\n"));
 
 	// TEMP Initial state change.
 	StateSplash::changeState();
-
-	// Create file dialog.
-	m_pFileDialog = new WidgetFileDialog();
-
-	// TEST Compilation of sigslot connections.
-	DerivedA derivedA;
-	DerivedB derivedB;
-	derivedA.sig.connect(&derivedB, &DerivedB::slot1);
-	//derivedA.sig.connect(&derivedB, &DerivedB::slot2);
-	derivedA.sig.connect(&derivedB, &DerivedB::slot3);
-	//derivedA.sig.connect(&derivedB, &DerivedB::slot4);
-	derivedB.slot2();
 
 	// Start main loop.
 	return m_pApplication->Run();
@@ -316,6 +611,7 @@ Application::ProcessNextFrame(
 	}
 
 	// Widget event dispatching.
+	Widget::dispatchEventProcess();
 	Widget::dispatchEventPaint();
 
 	++m_nFrameNumber;
@@ -347,6 +643,14 @@ Application::KeyDown(
 	const int knMenuKey = VK_ESCAPE;
 #endif
 
+	Key::keyDown(dwKey);
+
+	// No matter what, handle screenshot globally here.
+	if (dwKey == KeyCode::screenShot())
+	{
+		Application::screenShot();
+	}
+
 	// Widget event dispatching.
 	Widget::dispatchEventKeyPress(dwKey);
 	if (!Widget::isOtherEventDispatchingEnabled())
@@ -354,6 +658,7 @@ Application::KeyDown(
 		return S_OK;
 	}
 
+#if 1
 	if (dwKey == knControlKey)
 	{
 		Key::keyDown(Key::m_knKeyA);
@@ -378,6 +683,7 @@ Application::KeyDown(
 			Variable::render_model_bounds.setValue(_T("0"));
 		}
 	}
+#endif
 	else if (dwKey == keylist.vkB)
 	{
 		Key::keyDown(Key::m_knKeyB);
@@ -399,18 +705,6 @@ Application::KeyDown(
 				Menu::setCurrentItem(0);
 			}
 			Game::setPaused(!Game::isPaused());
-		}
-		else if (StateEditor::isState())
-		{
-			if (Menu::hasCurrentMenu())
-			{
-				Menu::clearCurrentMenu();
-			}
-			else
-			{
-				Menu::setCurrentMenu(Menu::editor);
-				Menu::setCurrentItem(0);
-			}
 		}
 	}
 	else if (dwKey == keylist.vkStart)
@@ -498,6 +792,8 @@ Application::KeyUp(
 	const int knMenuKey = VK_ESCAPE;
 #endif
 
+	Key::keyUp(dwKey);
+
 	// Widget event dispatching.
 	Widget::dispatchEventKeyRelease(dwKey);
 	if (!Widget::isOtherEventDispatchingEnabled())
@@ -550,15 +846,16 @@ HRESULT
 Application::StylusDblClk(
 	POINT p)
 {
+	// Set stylus state first.
+	const Vec2 kvScreenPoint(p.x, p.y);
+	Stylus::doubleClick(kvScreenPoint);
+
 	// Widget event dispatching.
 	Widget::dispatchEventStylusDoubleClick(WPoint(p.x, p.y));
 	if (!Widget::isOtherEventDispatchingEnabled())
 	{
 		return S_OK;
 	}
-
-	const Vec2 kvScreenPoint(p.x, p.y);
-	Stylus::doubleClick(kvScreenPoint);
 
 	m_pApplicationState->stylusDoubleClick(kvScreenPoint);
 
@@ -572,15 +869,16 @@ HRESULT
 Application::StylusDown(
 	POINT p)
 {
+	// Set stylus state first.
+	const Vec2 kvScreenPoint(p.x, p.y);
+	Stylus::down(kvScreenPoint);
+
 	// Widget event dispatching.
 	Widget::dispatchEventStylusDown(WPoint(p.x, p.y));
 	if (!Widget::isOtherEventDispatchingEnabled())
 	{
 		return S_OK;
 	}
-
-	const Vec2 kvScreenPoint(p.x, p.y);
-	Stylus::down(kvScreenPoint);
 
 	// TODO Do this only during game play
 	setActiveEntity(kvScreenPoint);
@@ -605,15 +903,22 @@ HRESULT
 Application::StylusMove(
 	POINT p)
 {
+	// Only do anything if stylus is down.
+	if (!Stylus::isDown())
+	{
+		return S_OK;
+	}
+
+	// Set stylus state first.
+	const Vec2 kvScreenPoint(p.x, p.y);
+	Stylus::move(kvScreenPoint);
+
 	// Widget event dispatching.
 	Widget::dispatchEventStylusMove(WPoint(p.x, p.y));
 	if (!Widget::isOtherEventDispatchingEnabled())
 	{
 		return S_OK;
 	}
-
-	const Vec2 kvScreenPoint(p.x, p.y);
-	Stylus::move(kvScreenPoint);
 
 	// Menu handling.
 	if (Menu::hasCurrentMenu() && Stylus::isDown())
@@ -635,15 +940,16 @@ HRESULT
 Application::StylusUp(
 	POINT p)
 {
+	// Set stylus state first.
+	const Vec2 kvScreenPoint(p.x, p.y);
+	Stylus::up(kvScreenPoint);
+
 	// Widget event dispatching.
 	Widget::dispatchEventStylusUp(WPoint(p.x, p.y));
 	if (!Widget::isOtherEventDispatchingEnabled())
 	{
 		return S_OK;
 	}
-
-	const Vec2 kvScreenPoint(p.x, p.y);
-	Stylus::up(kvScreenPoint);
 
 	// TODO move this into game state
 	if (Game::getActiveEntity())

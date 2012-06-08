@@ -7,23 +7,23 @@
 
 #include "widget.h"
 
-#include "widget_dialog.h"
+#include <algorithm>
 
 
-CGapiSurface*
+WSurface*
 Widget::m_pBackBuffer;
 
 std::vector<Widget*>
 Widget::m_cpTopLevelWidget;
 
-std::vector<WidgetDialog*>
-Widget::m_cpDialog;
-
-std::vector<WidgetDialog*>
-Widget::m_cpVisibleDialog;
+Widget*
+Widget::m_pActiveWindow = 0;
 
 Widget*
 Widget::m_pFocusWidget = 0;
+
+Widget*
+Widget::m_pGrabKeyboardWidget = 0;
 
 
 namespace
@@ -37,149 +37,140 @@ Widget* pStylusDownWidget = 0;
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
+void
+Widget::constructCommon()
+{
+	m_nFocusWidgetIndex = 0;
+	m_bEnabled = true;
+	m_bVisible = false;
+	m_bHidden = false;
+	m_bFocusEnabled = false;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
 void
 Widget::dispatchEventKeyPress(
 	const int knKeyCode)
 {
-	if (!m_pFocusWidget)
+	// TODO Check destination widget is enabled and visible.
+
+	if (m_pGrabKeyboardWidget)
+	{
+		m_pGrabKeyboardWidget->eventKeyPress(knKeyCode);
+		return;
+	}
+
+	if (!Widget::hasActiveWindow())
 	{
 		return;
 	}
 
-	m_pFocusWidget->eventKeyPress(knKeyCode);
+	Widget::getActiveWindow().getFocusWidgetForTree().eventKeyPress(
+		knKeyCode);
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 Widget::dispatchEventKeyRelease(
 	const int knKeyCode)
 {
-	if (!m_pFocusWidget)
+	// TODO Check destination widget is enabled and visible.
+
+	if (m_pGrabKeyboardWidget)
+	{
+		m_pGrabKeyboardWidget->eventKeyRelease(knKeyCode);
+		return;
+	}
+
+	if (!Widget::hasActiveWindow())
 	{
 		return;
 	}
 
-	m_pFocusWidget->eventKeyRelease(knKeyCode);
+	Widget::getActiveWindow().getFocusWidgetForTree().eventKeyRelease(
+		knKeyCode);
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 Widget::dispatchEventPaint()
 {
-	// Special dialog handling.
-	if (m_cpVisibleDialog.size())
+	if (Widget::hasActiveWindow())
 	{
-		Widget& dialog = *m_cpVisibleDialog.back();
-		dialog.eventPaint();
-		dialog.paintChildren();
-		return;
-	}
-
-	// Simply dispatch a paint event to all widgets. Crude but effective.
-	for (int n = 0; n != m_cpTopLevelWidget.size(); ++n)
-	{
-		Widget& widget = *m_cpTopLevelWidget[n];
-		if (widget.isVisible())
-		{
-			widget.eventPaint();
-			widget.paintChildren();
-		}
+		Widget::getActiveWindow().eventPaint();
+		Widget::getActiveWindow().paintChildren();
 	}
 }
 
 
 /*******************************************************************************
-	TODO Eventually I should rewrite these mouse event dispatch loops.
-	I should create a findChild function which uses the new global bounds each
-	widget has (faster and easier). I should also use the Widget& in the loops.
-******************************************************************************/
+*******************************************************************************/
+void
+Widget::dispatchEventProcess()
+{
+	if (Widget::hasActiveWindow())
+	{
+		Widget::getActiveWindow().eventProcess();
+		Widget::getActiveWindow().processChildren();
+	}
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
 void
 Widget::dispatchEventStylusDoubleClick(
 	const WPoint& kScreenPosition)
 {
-	// Special dialog handling.
-	if (m_cpVisibleDialog.size())
+	if (!Widget::hasActiveWindow())
 	{
-		Widget& widget = *m_cpVisibleDialog.back();
-		if (Widget* pWidget =
-			widget.getChild(
-				widget.translateFromParent(
-					kScreenPosition)))
-		{
-			pWidget->eventStylusDoubleClick(
-				pWidget->translateFromGlobal(kScreenPosition));
-		}
 		return;
 	}
 
-	for (int n = 0; n != m_cpTopLevelWidget.size(); ++n)
+	Widget* pWidget =
+		Widget::getActiveWindow().findGlobalChild(kScreenPosition);
+
+	if (pWidget)
 	{
-		Widget& widget = *m_cpTopLevelWidget[n];
-		if (widget.isVisible())
-		{
-			if (Widget* pWidget =
-				m_cpTopLevelWidget[n]->getChild(
-					m_cpTopLevelWidget[n]->translateFromParent(
-						kScreenPosition)))
-			{
-				pWidget->eventStylusDoubleClick(
-					pWidget->translateFromGlobal(kScreenPosition));
-				break;
-			}
-		}
+		pWidget->eventStylusDoubleClick(
+			pWidget->translateFromGlobal(kScreenPosition));
+		pStylusDownWidget = pWidget;
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 Widget::dispatchEventStylusDown(
 	const WPoint& kScreenPosition)
 {
-	// Special dialog handling.
-	if (m_cpVisibleDialog.size())
+	if (!Widget::hasActiveWindow())
 	{
-		Widget& widget = *m_cpVisibleDialog.back();
-		if (Widget* pWidget =
-			widget.getChild(
-				widget.translateFromParent(
-					kScreenPosition)))
-		{
-			pWidget->eventStylusDown(
-				pWidget->translateFromGlobal(kScreenPosition));
-			pStylusDownWidget = pWidget;
-		}
 		return;
 	}
 
-	for (int n = 0; n != m_cpTopLevelWidget.size(); ++n)
+	Widget* pWidget =
+		Widget::getActiveWindow().findGlobalChild(kScreenPosition);
+
+	if (pWidget)
 	{
-		Widget& widget = *m_cpTopLevelWidget[n];
-		if (widget.isVisible())
-		{
-			if (Widget* pWidget =
-				m_cpTopLevelWidget[n]->getChild(
-					m_cpTopLevelWidget[n]->translateFromParent(
-						kScreenPosition)))
-			{
-				pWidget->eventStylusDown(
-					pWidget->translateFromGlobal(kScreenPosition));
-				pStylusDownWidget = pWidget;
-				break;
-			}
-		}
+		pWidget->eventStylusDown(
+			pWidget->translateFromGlobal(kScreenPosition));
+		pStylusDownWidget = pWidget;
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 Widget::dispatchEventStylusMove(
 	const WPoint& kScreenPosition)
@@ -187,46 +178,29 @@ Widget::dispatchEventStylusMove(
 	if (pStylusDownWidget)
 	{
 		pStylusDownWidget->eventStylusMove(
-				pStylusDownWidget->translateFromGlobal(kScreenPosition));
+			pStylusDownWidget->translateFromGlobal(kScreenPosition));
 		return;
 	}
 
-	// Special dialog handling.
-	if (m_cpVisibleDialog.size())
+	if (!Widget::hasActiveWindow())
 	{
-		Widget& widget = *m_cpVisibleDialog.back();
-		if (Widget* pWidget =
-			widget.getChild(
-				widget.translateFromParent(
-					kScreenPosition)))
-		{
-			pWidget->eventStylusMove(
-				pWidget->translateFromGlobal(kScreenPosition));
-		}
 		return;
 	}
 
-	for (int n = 0; n != m_cpTopLevelWidget.size(); ++n)
+	Widget* pWidget =
+		Widget::getActiveWindow().findGlobalChild(kScreenPosition);
+
+	if (pWidget)
 	{
-		Widget& widget = *m_cpTopLevelWidget[n];
-		if (widget.isVisible())
-		{
-			if (Widget* pWidget =
-				m_cpTopLevelWidget[n]->getChild(
-					m_cpTopLevelWidget[n]->translateFromParent(
-						kScreenPosition)))
-			{
-				pWidget->eventStylusMove(
-					pWidget->translateFromGlobal(kScreenPosition));
-				break;
-			}
-		}
+		pWidget->eventStylusMove(
+			pWidget->translateFromGlobal(kScreenPosition));
+		pStylusDownWidget = pWidget;
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 Widget::dispatchEventStylusUp(
 	const WPoint& kScreenPosition)
@@ -234,24 +208,62 @@ Widget::dispatchEventStylusUp(
 	if (pStylusDownWidget)
 	{
 		pStylusDownWidget->eventStylusUp(
-				pStylusDownWidget->translateFromGlobal(kScreenPosition));
+			pStylusDownWidget->translateFromGlobal(kScreenPosition));
 		pStylusDownWidget = 0;
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
+Widget*
+Widget::findGlobalChild(
+	const WPoint& kPosition)
+{
+	if (!getGlobalBounds().contains(kPosition) ||
+		!isEnabled() || !isVisible())
+	{
+		return 0;
+	}
+
+	for (int nIndex = getNumberOfChildren() - 1; nIndex != -1; --nIndex)
+	{
+		Widget* pFound = getChild(nIndex).findGlobalChild(kPosition);
+		if (pFound && pFound->isEnabled() && pFound->isVisible())
+		{
+			return pFound;
+		}
+	}
+
+	return this;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Widget::focusNext()
+{
+	Widget& topLevel = getTopLevelAncestor();
+
+	topLevel.m_nFocusWidgetIndex =
+		(topLevel.m_nFocusWidgetIndex + 1) % topLevel.m_cpFocusWidget.size();
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
 Widget*
 Widget::getChild(
 	const WPoint& kPosition)
 {
+	
 	if (!WRect(WPoint(), getSize()).contains(kPosition))
 	{
 		return 0;
 	}
 
-	for (int nIndex = 0; nIndex != getNumberOfChildren(); ++nIndex)
+	for (int nIndex = getNumberOfChildren() - 1; nIndex != -1; --nIndex)
 	{
 		Widget& child = getChild(nIndex);
 		Widget* pChild = child.getChild(child.translateFromParent(kPosition));
@@ -266,7 +278,18 @@ Widget::getChild(
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
+Widget&
+Widget::getFocusWidgetForTree()
+{
+	Widget& topLevel = getTopLevelAncestor();
+
+	return *topLevel.m_cpFocusWidget[topLevel.m_nFocusWidgetIndex];
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
 void
 Widget::hide()
 {
@@ -285,53 +308,133 @@ Widget::hide()
 
 	m_bVisible = false;
 
+	// Focus.
+	if (&Widget::getFocusWidget() == this)
+	{
+		focusNext();
+	}
+
+	eventHide();
+
 	hideChildren();
 
-	// Special dialog handling.
-	for (std::vector<WidgetDialog*>::iterator i = m_cpVisibleDialog.begin();
-		i != m_cpVisibleDialog.end(); ++i)
+	if (isTopLevel())
 	{
-		if (this == *i)
-		{
-			m_cpVisibleDialog.erase(i);
-			break;
-		}
+		updateActiveWindow();
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 Widget::hideChildren()
 {
 	for (int nChildIndex = 0;
 		nChildIndex != getNumberOfChildren(); ++nChildIndex)
 	{
-		getChild(nChildIndex).m_bVisible = false;
-		getChild(nChildIndex).hideChildren();
+		Widget& child = getChild(nChildIndex);
+		if (child.isShown())
+		{
+			child.m_bVisible = false;
+			child.hideChildren();
+			child.eventHide();
+		}
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 Widget::paintChildren()
 {
-	// TODO Check visibility.
-
 	for (int nChildIndex = 0;
 		nChildIndex != getNumberOfChildren(); ++nChildIndex)
 	{
-		getChild(nChildIndex).eventPaint();
-		getChild(nChildIndex).paintChildren();
+		Widget& child = getChild(nChildIndex);
+		if (child.isVisible())
+		{
+			child.eventPaint();
+			child.paintChildren();
+		}
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
+void
+Widget::processChildren()
+{
+	for (int nChildIndex = 0;
+		nChildIndex != getNumberOfChildren(); ++nChildIndex)
+	{
+		Widget& child = getChild(nChildIndex);
+		if (child.isVisible())
+		{
+			child.eventProcess();
+			child.processChildren();
+		}
+	}
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Widget::raise()
+{
+	if (isTopLevel())
+	{
+		m_cpTopLevelWidget.erase(
+			std::find(
+				m_cpTopLevelWidget.begin(),
+				m_cpTopLevelWidget.end(),
+				this));
+		m_cpTopLevelWidget.push_back(this);
+		updateActiveWindow();
+	}
+	else
+	{
+		// TODO Implement raising for child widgets.
+	}
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Widget::setFocusEnabled(
+	const bool kbFocusEnabled)
+{
+	if (m_bFocusEnabled == kbFocusEnabled)
+	{
+		return;
+	}
+
+	Widget& topLevel = getTopLevelAncestor();
+	if (kbFocusEnabled)
+	{
+		// Add to focus order.
+		topLevel.m_cpFocusWidget.push_back(this);
+	}
+	else
+	{
+		// Remove from focus order.
+		topLevel.m_cpFocusWidget.erase(
+			std::find(
+				topLevel.m_cpFocusWidget.begin(),
+				topLevel.m_cpFocusWidget.end(),
+				this));
+	}
+
+	m_bFocusEnabled = kbFocusEnabled;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
 void
 Widget::show()
 {
@@ -352,34 +455,34 @@ Widget::show()
 
 	showChildren();
 
-	// Special dialog handling.
-	for (int nDialogIndex = 0;
-		nDialogIndex != m_cpDialog.size(); ++nDialogIndex)
+	eventShow();
+
+	if (isTopLevel())
 	{
-		if (this == m_cpDialog[nDialogIndex])
-		{
-			m_cpVisibleDialog.push_back(static_cast<WidgetDialog*>(this));
-			break;
-		}
+		updateActiveWindow();
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 void
 Widget::showChildren()
 {
 	for (int nChildIndex = 0;
 		nChildIndex != getNumberOfChildren(); ++nChildIndex)
 	{
-		getChild(nChildIndex).show();
+		Widget& child = getChild(nChildIndex);
+		if (child.isShown())
+		{
+			child.show();
+		}
 	}
 }
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 WPoint
 Widget::translateFromGlobal(
 	const WPoint& kPosition) const
@@ -392,4 +495,24 @@ Widget::translateFromGlobal(
 		pkWidget = &pkWidget->getParent();
 	}
 	return pkWidget->translateFromParent(position);
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Widget::updateActiveWindow()
+{
+	m_pActiveWindow = 0;
+
+	for (int n = m_cpTopLevelWidget.size() - 1; n != -1; --n)
+	{
+		if (m_cpTopLevelWidget[n]->isVisible())
+		{
+			Widget::setActiveWindow(*m_cpTopLevelWidget[n]);
+			break;
+		}
+	}
+
+	// TODO Update focus widget.
 }

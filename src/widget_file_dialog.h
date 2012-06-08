@@ -20,7 +20,7 @@ class WidgetLineEdit;
 	the accepted and cancelled signals, do your handling there, and be sure
 	to unconnect your slots when you are done so the dialog can be reused.
 	Obviously it cannot be used reentrantly.
-******************************************************************************/
+*******************************************************************************/
 class WidgetFileDialog : public WidgetDialog
 {
 
@@ -29,14 +29,21 @@ public:
 
 	WidgetFileDialog()
 	{
-		init();
+		constructCommon();
+	}
+
+	WidgetFileDialog(
+		const tstring& ksName) :
+		WidgetDialog(ksName)
+	{
+		constructCommon();
 	}
 
 	WidgetFileDialog(
 		Widget& parent) :
 		WidgetDialog(parent)
 	{
-		init();
+		constructCommon();
 	}
 
 	WidgetFileDialog(
@@ -44,31 +51,28 @@ public:
 		const tstring& ksName) :
 		WidgetDialog(parent, ksName)
 	{
-		init();
+		constructCommon();
+	}
+
+	const tstring&
+	getCaption() const
+	{
+		return m_sCaption;
 	}
 
 	const tstring&
 	getSelectedFileName() const;
 
 	void
-	init();
-
-	virtual void slotHide()
+	setCaption(
+		const tstring& ksCaption)
 	{
-		hide();
+		m_sCaption = ksCaption;
 	}
 
-	virtual void slotShow()
-	{
-		show();
-	}
-
-
-public:
-
-	sigslot::signal0<> accepted;
-
-	sigslot::signal0<> cancelled;
+	void
+	setFileName(
+		const tstring& ksFileName);
 
 
 protected:
@@ -81,19 +85,12 @@ protected:
 private:
 
 	void
-	fireAccepted()
-	{
-		accepted();
-	}
-
-	void
-	fireCancelled()
-	{
-		cancelled();
-	}
+	constructCommon();
 
 
 private:
+
+	tstring m_sCaption;
 
 	WidgetLineEdit* m_pLineEdit;
 

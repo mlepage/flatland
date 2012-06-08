@@ -6,6 +6,7 @@
 #define GUARD__EDIT_LINE
 
 
+#include <algorithm>
 #include <vector>
 
 #include "edit_point.h"
@@ -24,28 +25,75 @@ public:
 
 	void
 	addPolygon(
-		EditPolygon& polygon);
+		EditPolygon& polygon)
+	{
+		// TODO Maybe should ensure that only two polygons are added.
+		m_cpPolygon.push_back(&polygon);
+	}
 
 	EditPoint&
-	getBeginPoint();
+	getBeginPoint()
+	{
+		return *m_pBeginPoint;
+	}
 
 	EditPoint&
-	getEndPoint();
+	getEndPoint()
+	{
+		return *m_pEndPoint;
+	}
 
 	const tstring&
-	getName() const;
+	getName() const
+	{
+		return m_sName;
+	}
+
+	int
+	getNumberOfPolygons() const
+	{
+		return m_cpPolygon.size();
+	}
+
+	EditPolygon&
+	getPolygon(
+		const int knIndex)
+	{
+		return *m_cpPolygon[knIndex];
+	}
+
+	void
+	removePolygon(
+		EditPolygon& polygon)
+	{
+		m_cpPolygon.erase(
+			std::find(m_cpPolygon.begin(), m_cpPolygon.end(), &polygon));
+	}
 
 	void
 	setBeginPoint(
-		EditPoint& beginPoint);
+		EditPoint& beginPoint)
+	{
+		// TODO Handle existing old point.
+		m_pBeginPoint = &beginPoint;
+		beginPoint.addLine(*this);
+	}
 
 	void
 	setEndPoint(
-		EditPoint& endPoint);
+		EditPoint& endPoint)
+	{
+		// TODO Handle existing old point.
+		m_pEndPoint = &endPoint;
+		endPoint.addLine(*this);
+	}
 
 	void
 	setName(
-		const tstring& ksName);
+		const tstring& ksName)
+	{
+		m_sName = ksName;
+	}
 
 
 private:
@@ -61,89 +109,6 @@ private:
 
 
 };
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-void
-EditLine::addPolygon(
-	EditPolygon& polygon)
-{
-	// TODO Maybe should ensure that only two polygons are added.
-	m_cpPolygon.push_back(&polygon);
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-EditPoint&
-EditLine::getBeginPoint()
-{
-	return *m_pBeginPoint;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-EditPoint&
-EditLine::getEndPoint()
-{
-	return *m_pEndPoint;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-const tstring&
-EditLine::getName() const
-{
-	return m_sName;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-void
-EditLine::setBeginPoint(
-	EditPoint& beginPoint)
-{
-	// TODO remove old point
-
-	m_pBeginPoint = &beginPoint;
-
-	beginPoint.addLine(*this);
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-void
-EditLine::setEndPoint(
-	EditPoint& endPoint)
-{
-	// TODO remove old point
-
-	m_pEndPoint = &endPoint;
-
-	endPoint.addLine(*this);
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-void
-EditLine::setName(
-	const tstring& ksName)
-{
-	m_sName = ksName;
-}
 
 
 #endif // GUARD

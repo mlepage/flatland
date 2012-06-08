@@ -6,6 +6,8 @@
 #define GUARD__EDIT_MODEL
 
 
+#include <vector>
+
 #include "directory.h"
 #include "edit_line.h"
 #include "edit_point.h"
@@ -14,13 +16,22 @@
 
 
 /*******************************************************************************
+	TODO Make point/line/polygon creation from this class, to encapsulate
+	creation.
 *******************************************************************************/
 class EditModel
 {
 
 public:
 
-	EditModel();
+	EditModel() :
+		m_nLineNumber(0),
+		m_nPointNumber(0),
+		m_nPolygonNumber(0)
+	{
+	}
+
+	~EditModel();
 
 	void
 	addLine(
@@ -33,6 +44,10 @@ public:
 	void
 	addPolygon(
 		EditPolygon& polygon);
+
+	void
+	destroyPoints(
+		const std::vector<EditPoint*> kcpPoint);
 
 	EditLine*
 	findLine(
@@ -102,17 +117,6 @@ private:
 	int m_nPolygonNumber;
 
 };
-
-
-/*******************************************************************************
-*******************************************************************************/
-inline
-EditModel::EditModel() :
-	m_nLineNumber(0),
-	m_nPointNumber(0),
-	m_nPolygonNumber(0)
-{
-}
 
 
 /*******************************************************************************

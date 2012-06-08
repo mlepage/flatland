@@ -10,7 +10,7 @@
 
 
 /*******************************************************************************
-******************************************************************************/
+*******************************************************************************/
 class WidgetPushButton : public WidgetButton
 {
 
@@ -18,6 +18,12 @@ class WidgetPushButton : public WidgetButton
 public:
 
 	WidgetPushButton()
+	{
+	}
+
+	WidgetPushButton(
+		const tstring& ksName) :
+		WidgetButton(ksName)
 	{
 	}
 
@@ -35,7 +41,7 @@ public:
 	}
 
 
-private:
+protected:
 
 	virtual
 	void

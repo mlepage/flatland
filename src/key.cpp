@@ -13,38 +13,19 @@
 #include "view.h"
 
 
+// Key codes.
+int KeyCode::m_knEnter;
+int KeyCode::m_knUp;
+int KeyCode::m_knDown;
+int KeyCode::m_knLeft;
+int KeyCode::m_knRight;
+int KeyCode::m_knMenu;
+int KeyCode::m_knScreenShot;
+int KeyCode::m_knControl;
+int KeyCode::m_knShift;
+
 std::vector<bool>
-Key::m_cbKeyState(8);
-
-
-/*******************************************************************************
-*******************************************************************************/
-bool
-Key::isKeyDown(
-	const KeyCode knKeyCode)
-{
-	return m_cbKeyState[knKeyCode];
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-void
-Key::keyDown(
-	const KeyCode knKeyCode)
-{
-	m_cbKeyState[knKeyCode] = true;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-void
-Key::keyUp(
-	const KeyCode knKeyCode)
-{
-	m_cbKeyState[knKeyCode] = false;
-}
+Key::m_cbKeyDown(256);
 
 
 /*******************************************************************************
@@ -52,6 +33,8 @@ Key::keyUp(
 void
 Key::processCommands()
 {
+	// TODO Move all this shit out of here.
+
 	if (Application::isScrollViewEnabled())
 	{
 		// Right now this function only handles view scrolling, so exit if
@@ -85,4 +68,30 @@ Key::processCommands()
 			View::getWorldView().getMin() + Vec2(knViewMove, 0));
 		Game::setAutoscrollEnabled(false);
 	}
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+KeyCode::restoreDefaults(
+	GDKEYLIST& keyList)
+{
+	KeyCode::m_knEnter = keyList.vkStart;
+	KeyCode::m_knUp = keyList.vkUp;
+	KeyCode::m_knDown = keyList.vkDown;
+	KeyCode::m_knLeft = keyList.vkLeft;
+	KeyCode::m_knRight = keyList.vkRight;
+
+#ifdef _WIN32_WCE
+	KeyCode::m_knMenu = keyList.vkC;
+	KeyCode::m_knScreenShot = 0;
+	KeyCode::m_knControl = keyList.vkA;
+	KeyCode::m_knShift = keyList.vkB;
+#else
+	KeyCode::m_knMenu = VK_ESCAPE;
+	KeyCode::m_knScreenShot = 'S';
+	KeyCode::m_knControl = VK_CONTROL;
+	KeyCode::m_knShift = VK_SHIFT;
+#endif
 }

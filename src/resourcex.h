@@ -48,6 +48,11 @@ public:
 	init();
 
 	static
+	EditModel&
+	loadEditModel(
+		const tstring& ksName);
+
+	static
 	void
 	loadLevel(
 		const tstring& ksName);
@@ -65,11 +70,6 @@ private:
 	static
 	Anim&
 	loadAnim(
-		const tstring& ksName);
-
-	static
-	EditModel&
-	loadEditModel(
 		const tstring& ksName);
 
 	static

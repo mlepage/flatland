@@ -182,7 +182,7 @@ Resourcex::loadEditModel(
 	const tstring& ksName)
 {
 	const tstring ksFileName =
-		tstring(_T("data\\edits\\")) +
+		tstring(_T("data\\edit_models\\")) +
 		ksName +
 		tstring(_T(".txt"));
 
