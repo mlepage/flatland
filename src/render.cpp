@@ -7,9 +7,11 @@
 
 #include "render.h"
 
+#include "anim.h"
+#include "entity.h"
 #include "game.h"
 #include "geometry.h"
-#include "entity.h"
+#include "image.h"
 #include "model.h"
 #include "rect.h"
 #include "screen.h"
@@ -360,11 +362,12 @@ if (Variable::render_model_bounds.getFloatValue())
 		}
 }
 
-if (Variable::render_entity_image.getFloatValue())
+if (Variable::render_entity_image.getFloatValue() &&
+	kEntity.hasAnim())
 {
-	// Entity image.
+	const Anim& kAnim = kEntity.getAnim();
 	CGapiSurface* pSurface =
-		const_cast<CGapiSurface*>(&kEntity.getModel().getImage());
+		&kAnim.getImage().getSurface();
 	if (pSurface)
 	{
 	// Screen origin and size.
@@ -392,14 +395,31 @@ if (Variable::render_entity_image.getFloatValue())
 		vScreenOrigin[0] -= srcRect.left;
 		srcRect.left = 0;
 	}
-	if (pSurface->GetHeight() < srcRect.bottom)
+	if (kAnim.getSize()[1] < srcRect.bottom)
 	{
-		srcRect.bottom = pSurface->GetHeight();
+		srcRect.bottom = kAnim.getSize()[1];
 	}
-	if (pSurface->GetWidth() < srcRect.right)
+	if (kAnim.getSize()[0] < srcRect.right)
 	{
-		srcRect.right = pSurface->GetWidth();
+		srcRect.right = kAnim.getSize()[0];
 	}
+
+	// Anim frame.
+	int nImageFrame = kAnim.getFrame(kEntity.m_nAnimFrameIndex).m_nIndex;
+	srcRect.left += nImageFrame * kAnim.getSize()[0];
+	srcRect.right += nImageFrame * kAnim.getSize()[0];
+	Entity& entity = const_cast<Entity&>(kEntity);
+	if (kAnim.getFrame(kEntity.m_nAnimFrameIndex).m_nCount <=
+		++entity.m_nAnimFrameCount)
+	{
+		entity.m_nAnimFrameCount = 0;
+		if (kAnim.getNumberOfFrames() <=
+			++entity.m_nAnimFrameIndex)
+		{
+			entity.m_nAnimFrameIndex = 0;
+		}
+	}
+
 	Screen::getBackBuffer()->BltFast(
 		vScreenOrigin[0],
 		vScreenOrigin[1],

@@ -1,8 +1,8 @@
 entity
 {
 	type = world
-	model_name = breakout-1
-	mobile = 0
+	model_name = alpha-1
+	anim_name = alpha-1
 	colour = <0, 255, 0>
 }
 entity
@@ -23,15 +23,25 @@ entity
 		}
 	}
 	colour = <0, 127, 255>
-	mobile = 0
 }
 entity
 {
 	type = player
 	model_name = ufo
+	anim_name = ufo-yellow
 	colour = <255, 255, 0>
 	mobile = 1
 	position = <120, 60>
+	velocity = <0, 0>
+}
+entity
+{
+	type = monster
+	model_name = ufo
+	anim_name = ufo-red
+	colour = <255, 0, 0>
+	mobile = 1
+	position = <120, 100>
 	velocity = <0, 0>
 }
 entity
@@ -47,8 +57,7 @@ entity
 			<80, 290>
 		}
 	}
-	image_name = diamond
-	mobile = 0
+	anim_name = diamond-backward
 	colour = <255, 0, 0>
 }
 entity
@@ -64,8 +73,7 @@ entity
 			<80, 250>
 		}
 	}
-	image_name = diamond
-	mobile = 0
+	anim_name = diamond
 	colour = <255, 0, 0>
 }
 entity
@@ -81,8 +89,7 @@ entity
 			<60, 270>
 		}
 	}
-	image_name = diamond
-	mobile = 0
+	anim_name = diamond-backward
 	colour = <255, 0, 0>
 }
 entity
@@ -98,8 +105,7 @@ entity
 			<100, 270>
 		}
 	}
-	image_name = diamond
-	mobile = 0
+	anim_name = diamond
 	colour = <255, 0, 0>
 }
 entity
@@ -115,8 +121,7 @@ entity
 			<160, 290>
 		}
 	}
-	image_name = diamond
-	mobile = 0
+	anim_name = diamond
 	colour = <255, 0, 0>
 }
 entity
@@ -132,8 +137,7 @@ entity
 			<160, 250>
 		}
 	}
-	image_name = diamond
-	mobile = 0
+	anim_name = diamond-backward
 	colour = <255, 0, 0>
 }
 entity
@@ -149,8 +153,7 @@ entity
 			<140, 270>
 		}
 	}
-	image_name = diamond
-	mobile = 0
+	anim_name = diamond
 	colour = <255, 0, 0>
 }
 entity
@@ -166,8 +169,87 @@ entity
 			<180, 270>
 		}
 	}
-	image_name = diamond
-	mobile = 0
+	anim_name = diamond-backward
+	colour = <255, 0, 0>
+}
+entity
+{
+	type = block
+	model
+	{
+		brush
+		{
+			<110, 240>
+			<120, 230>
+			<130, 240>
+			<120, 250>
+		}
+	}
+	anim
+	{
+		image_name = diamond
+		size = <20, 20>
+		frame
+		{
+			index = 0
+			count = 1
+		}
+		frame
+		{
+			index = 1
+			count = 1
+		}
+		frame
+		{
+			index = 2
+			count = 1
+		}
+		frame
+		{
+			index = 3
+			count = 1
+		}
+	}
+	colour = <255, 0, 0>
+}
+entity
+{
+	type = block
+	model
+	{
+		brush
+		{
+			<110, 280>
+			<120, 270>
+			<130, 280>
+			<120, 290>
+		}
+	}
+	anim
+	{
+		image_name = diamond
+		size = <20, 20>
+		frame
+		{
+			index = 3
+			count = 1
+		}
+		frame
+		{
+			index = 2
+			count = 1
+		}
+		frame
+		{
+			index = 1
+			count = 1
+		}
+		frame
+		{
+			index = 0
+			count = 1
+		}
+	}
 	colour = <255, 0, 0>
 }
 entity
@@ -183,7 +265,7 @@ entity
 			<20, 0>
 		}
 	}
-	image_name = obstacle
+	anim_name = obstacle-happy
 	colour = <255, 0, 255>
 	mobile = 1
 	position = <80, 180>
@@ -204,7 +286,7 @@ entity
 			<20, 0>
 		}
 	}
-	image_name = obstacle
+	anim_name = obstacle-angry
 	colour = <255, 0, 255>
 	mobile = 1
 	position = <160, 180>

@@ -1,0 +1,25 @@
+anim
+{
+	image_name = alpha-1
+	size = <240, 320>
+	frame
+	{
+		index = 0
+		count = 5
+	}
+	frame
+	{
+		index = 1
+		count = 10
+	}
+	frame
+	{
+		index = 2
+		count = 5
+	}
+	frame
+	{
+		index = 1
+		count = 10
+	}
+}

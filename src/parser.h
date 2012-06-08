@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <vector>
 #include <tchar.h>
+#include "anim.h"
 #include "tstring.h"
 
 
@@ -33,6 +34,10 @@ public:
 public:
 
 	void
+	parseAnim(
+		Anim& anim);
+
+	void
 	parseEntity(
 		Entity& entity);
 
@@ -53,6 +58,10 @@ private:
 	void
 	matchLine(
 		const tstring& ksLine);
+
+	void
+	parseAnimFrame(
+		Anim::Frame& frame);
 
 	void
 	parseAttribute(

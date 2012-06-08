@@ -9,19 +9,67 @@
 
 #include <cstdio>
 #include "GapiDraw.h"
+#include "anim.h"
 #include "console.h"
 #include "error.h"
 #include "exception.h"
 #include "file.h"
 #include "game.h"
+#include "image.h"
 #include "model.h"
 #include "parser.h"
 #include "text_buffer.h"
 #include "variable.h"
 
 
+Directory<Anim>
+Resourcex::m_animDirectory;
+
+Directory<Image>
+Resourcex::m_imageDirectory;
+
 Directory<Model>
 Resourcex::m_modelDirectory;
+
+
+/*******************************************************************************
+	Returns the anim. Loads it if necessary. Fatal error if not found.
+*******************************************************************************/
+Anim&
+Resourcex::getAnim(
+	const tstring& ksName)
+{
+	Anim* pAnim;
+
+	// Find the anim.
+	if (pAnim = m_animDirectory.find(ksName))
+	{
+		return *pAnim;
+	}
+
+	// Load the anim.
+	return loadAnim(ksName);
+}
+
+
+/*******************************************************************************
+	Returns the image. Loads it if necessary. Fatal error if not found.
+*******************************************************************************/
+Image&
+Resourcex::getImage(
+	const tstring& ksName)
+{
+	Image* pImage;
+
+	// Find the image.
+	if (pImage = m_imageDirectory.find(ksName))
+	{
+		return *pImage;
+	}
+
+	// Load the image.
+	return loadImage(ksName);
+}
 
 
 /*******************************************************************************
@@ -66,57 +114,70 @@ Resourcex::init()
 
 
 /*******************************************************************************
+	The anim name is a simple name, e.g. "world".
+*******************************************************************************/
+Anim&
+Resourcex::loadAnim(
+	const tstring& ksName)
+{
+	const tstring ksFileName =
+		tstring(_T("data\\anims\\")) +
+		ksName +
+		tstring(_T(".txt"));
+
+	FILE* pFile = File::openFile(ksFileName, _T("r"));
+
+	Anim& anim = *new Anim();
+	anim.setName(ksName);
+	m_animDirectory.insert(ksName, anim);
+
+	TRY
+	{
+		Parser parser(pFile);
+		parser.parseAnim(anim);
+	}
+	CATCHALL
+	{
+		m_animDirectory.erase(ksName);
+		delete &anim;
+		RETHROW;
+	}
+	END_TRY_CATCHALL
+
+	File::closeFile(pFile);
+
+	return anim;
+}
+
+
+/*******************************************************************************
 	The image name is a simple name, e.g. "world".
 *******************************************************************************/
-CGapiSurface&
+Image&
 Resourcex::loadImage(
-	const _TCHAR* const kpkName)
+	const tstring& ksName)
 {
-	// TODO fix this mess
-	TextBuffer<256> fileName;
-	if (kpkName[0] == _T('\\'))
-	{
-		// Already absolute name.
-		_sntprintf(
-			fileName.getBuffer(),
-			fileName.getSize(),
-			_T("%s.png"),
-			kpkName);
-	}
-	else
-	{
-		_sntprintf(
-			fileName.getBuffer(),
-			fileName.getSize(),
-			_T("%s\\data\\images\\%s.png"),
-			Variable::file_base_dir.getValue().c_str(),
-			kpkName);
-	}
+	const tstring ksFileName =
+		tstring(_T("data\\images\\")) +
+		ksName +
+		tstring(_T(".png"));
 
-	// TODO manage this resource
-	CGapiSurface* pImage = new CGapiSurface();
+	Image& image = *new Image();
+	image.setName(ksName);
+	m_imageDirectory.insert(ksName, image);
 
-	HRESULT result = pImage->CreateSurface(0, fileName.getBuffer());
+	HRESULT result =
+		image.getSurface().CreateSurface(
+			0,
+			File::makeFileName(ksFileName).c_str());
 	if (result != GD_OK)
 	{
-		Console::print(_T("Error loading resource: %s\n"),
-			fileName.getBuffer());
-		Console::print(_T("error code %d\n"), result);
-		Console::print(_T("codes: %d %d %d %d %d %d %d %d\n"),
-			GDERR_BITMAPNOTFOUND,
-			GDERR_INCOMPATIBLEPRIMARY,
-			GDERR_INVALIDBITMAP,
-			GDERR_INVALIDPARAMS,
-			GDERR_INVALIDSURFACETYPE,
-			GDERR_LOCKEDSURFACES,
-			GDERR_OUTOFMEMORY, 
-			GDERR_SURFACELOST);
+		m_imageDirectory.erase(ksName);
+		delete &image;
+		// TODO Throw exception
 	}
-	pImage->SetColorKey(RGB(0, 0, 0));
 
-	Console::print(_T("Resource loaded: %s\n"), fileName.getBuffer());
-
-	return *pImage;
+	return image;
 }
 
 
@@ -159,31 +220,26 @@ Resourcex::loadModel(
 
 	FILE* pFile = File::openFile(ksFileName, _T("r"));
 
-	Model* pModel = new Model();
-	m_modelDirectory.insert(ksName, *pModel);
-
-	pModel->setName(ksName);
+	Model& model = *new Model();
+	model.setName(ksName);
+	m_modelDirectory.insert(ksName, model);
 
 	TRY
 	{
 		Parser parser(pFile);
-		parser.parseModel(*pModel);
+		parser.parseModel(model);
 	}
 	CATCHALL
 	{
 		m_modelDirectory.erase(ksName);
+		delete &model;
 		RETHROW;
 	}
 	END_TRY_CATCHALL
 
 	File::closeFile(pFile);
 
-	// Load the image.
-	// Can't do this until we start loading models after app is running.
-	pModel->setImage(loadImage(ksName.c_str()));
-	// TODO check that model image is same size as model bounds
-
-	return *pModel;
+	return model;
 }
 
 

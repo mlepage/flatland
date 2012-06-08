@@ -1,0 +1,25 @@
+anim
+{
+	image_name = obstacle
+	size = <40, 40>
+	frame
+	{
+		index = 1
+		count = 60
+	}
+	frame
+	{
+		index = 2
+		count = 30
+	}
+	frame
+	{
+		index = 1
+		count = 75
+	}
+	frame
+	{
+		index = 2
+		count = 15
+	}
+}

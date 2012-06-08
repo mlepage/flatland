@@ -11,6 +11,7 @@
 #include "rect.h"
 
 
+class Anim;
 class EntityType;
 
 
@@ -38,6 +39,9 @@ public:
 
 	scalar
 	getAngle() const;
+
+	const Anim&
+	getAnim() const;
 
 	const Rect&
 	getBounds() const;
@@ -88,11 +92,18 @@ public:
 	getVelocity() const;
 
 	bool
+	hasAnim() const;
+
+	bool
 	isMobile() const;
 
 	void
 	setAngle(
 		const scalar kfAngle);
+
+	void
+	setAnim(
+		const Anim& kAnim);
 
 	void
 	setBounds(
@@ -141,6 +152,10 @@ public:
 
 	int m_nInfiniteStuckCount;
 
+	// Hacked in animation support
+	int m_nAnimFrameIndex;
+	int m_nAnimFrameCount;
+
 
 private:
 
@@ -152,6 +167,8 @@ private:
 
 	// The entity's model, if it has one.
 	Model* m_pModel;
+
+	const Anim* m_pkAnim;
 
 	// The colour.
 	Vec3 m_vColour;
@@ -197,13 +214,16 @@ private:
 inline
 Entity::Entity() :
 	m_nInfiniteStuckCount(0),
+	m_nAnimFrameIndex(0),
+	m_nAnimFrameCount(0),
 	m_nIdentifier(0),
 	m_pModel(0),
+	m_pkAnim(0),
 	m_vColour(255, 255, 255),
 	m_fMass(1),
 	m_fAngle(0),
 	m_fOldAngle(0),
-	m_bMobile(true),
+	m_bMobile(false),
 	m_mTransformModelToWorld(1, 0, 0, 0, 1, 0, 0, 0, 1),
 	m_mTransformWorldToModel(1, 0, 0, 0, 1, 0, 0, 0, 1)
 {
@@ -217,6 +237,17 @@ scalar
 Entity::getAngle() const
 {
 	return m_fAngle;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+const Anim&
+Entity::getAnim() const
+{
+	// Throw an exception if it isn't set.
+	return *m_pkAnim;
 }
 
 
@@ -384,6 +415,16 @@ Entity::getVelocity() const
 *******************************************************************************/
 inline
 bool
+Entity::hasAnim() const
+{
+	return m_pkAnim != 0;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+bool
 Entity::isMobile() const
 {
 	return m_bMobile;
@@ -398,6 +439,17 @@ Entity::setAngle(
 	const scalar kfAngle)
 {
 	m_fAngle = kfAngle;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+void
+Entity::setAnim(
+	const Anim& kAnim)
+{
+	m_pkAnim = &kAnim;
 }
 
 

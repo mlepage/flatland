@@ -19,6 +19,7 @@
 #include "exception.h"
 #include "file.h"
 #include "game.h"
+#include "image.h"
 #include "key.h"
 #include "render.h"
 #include "resourcex.h"
@@ -201,12 +202,55 @@ CMyApplication::ProcessNextFrame(
 	CGapiSurface& backbuffer,
 	DWORD dwFlags)
 {
-	static bool bFirstTime = true;
-	if (bFirstTime)
+	// Splash screen.
+	static CGapiSurface* pSplash = 0;
+	static int nSplashCount = 0;
+	const int knSplashTime = 90;
+	const int knFadeTime = 30;
+	if (nSplashCount == 0)
 	{
-		bFirstTime = false;
+		pSplash = &Resourcex::getImage(_T("splash")).getSurface();
+	}
+	if (nSplashCount < knSplashTime)
+	{
+		backbuffer.FillRect(
+			NULL,
+			RGB(0, 0, 0),
+			0,
+			NULL);
+		GDBLTFASTFX fx;
+		if (nSplashCount < knFadeTime)
+		{
+			fx.dwOpacity =
+				double(nSplashCount) / knFadeTime * 255;
+		}
+		else if ((knSplashTime - knFadeTime) <= nSplashCount)
+		{
+			fx.dwOpacity =
+				double(knSplashTime - nSplashCount - 1) / knFadeTime * 255;
+		}
+		else
+		{
+			fx.dwOpacity = 255;
+		}
+		backbuffer.BltFast(
+			0,
+			0,
+			pSplash,
+			NULL,
+			GDBLTFAST_OPACITY,
+			&fx);
+		++nSplashCount;
+		return S_OK;
+	}
+
+	// Load first level.
+	if (nSplashCount == knSplashTime)
+	{
+		// TODO unload splash screen.
 		Console::print(_T("Loading level\n"));
 		Resourcex::loadLevel(Variable::first_level.getValue());
+		++nSplashCount;
 	}
 
 #ifndef FLATLAND_ENABLE_CUSTOM_LINE_CLIPPING
@@ -368,12 +412,16 @@ CMyApplication::ProcessNextFrame(
 	TCHAR str[128];
 	FLOAT nActualFrameTime = 0;
 	m_timer.GetActualFrameTime(&nActualFrameTime);
-	_stprintf(str, TEXT("Current frame: [%.3f ms]"), nActualFrameTime);
-	DrawFrameInfo(backbuffer, 320 - 40, str, RGB(170, 90, 60));
+	_stprintf(str, TEXT("%.2f ms"), nActualFrameTime);
+	backbuffer.DrawText(120, 312, str, Screen::getSystemFont(),
+		0, NULL, 0, NULL);
+	//DrawFrameInfo(backbuffer, 320 - 40, str, RGB(170, 90, 60));
 	FLOAT nFrameRate = 0;
 	m_timer.GetActualFrameRate(&nFrameRate);
-	_stprintf(str, TEXT("Current framerate: [%.3f fps]"), nFrameRate);
-	DrawFrameInfo(backbuffer, 320 - 20, str, RGB(90, 60, 170));
+	_stprintf(str, TEXT("%.2f fps"), nFrameRate);
+	backbuffer.DrawText(180, 312, str, Screen::getSystemFont(),
+		0, NULL, 0, NULL);
+	//DrawFrameInfo(backbuffer, 320 - 20, str, RGB(90, 60, 170));
 #endif
 
 	return S_OK;

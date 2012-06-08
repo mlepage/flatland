@@ -1,4 +1,4 @@
-set first_level = breakout-1
+set first_level = alpha-1
 set render_brush_bounds = 0
 set render_brush_outline = 0
 set render_entity_bounds = 0

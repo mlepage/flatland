@@ -768,6 +768,7 @@ Game::makeTestLevel2()
 void
 Game::makeTestLevel3()
 {
+#if 0
 	// World parameters.
 	const int knRoomWidth = 240;
 	const int knRoomHeight = 320;
@@ -949,6 +950,7 @@ Game::makeTestLevel3()
 			World::linkEntity(entity);
 		}
 	}
+#endif
 }
 
 

@@ -1,0 +1,10 @@
+anim
+{
+	image_name = ufo-red
+	size = <20, 20>
+	frame
+	{
+		index = 0
+		count = 1
+	}
+}

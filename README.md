@@ -10,6 +10,15 @@ Windows executables are provided for each milestone release. Instructions are in
 Release History
 ===============
 
+Milestone 4 - Sep 02, 2003
+--------------------------
+
+The fourth milestone is the "animation" milestone.
+
+Images are now no longer contained directly by models or entities, but are accessed through animations. An image once again spans the bounding box of a model, but can contain multiple tiled frames. Then, an animation specifies which frames to display, and for how long. Multiple animations can reference the same image. Animations can be defined inline, or placed in their own file for reuse. See the sample level for details.
+
+A splash screen now displays at program startup.
+
 Milestone 3 - Aug 30, 2003
 --------------------------
 

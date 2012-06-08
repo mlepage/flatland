@@ -10,7 +10,9 @@
 #include "tstring.h"
 
 
+class Anim;
 class CGapiSurface;
+class Image;
 class Model;
 
 
@@ -22,6 +24,16 @@ class Resourcex
 public:
 
 	static
+	Anim&
+	getAnim(
+		const tstring& ksName);
+
+	static
+	Image&
+	getImage(
+		const tstring& ksName);
+
+	static
 	Model&
 	getModel(
 		const tstring& ksName);
@@ -31,18 +43,8 @@ public:
 	init();
 
 	static
-	CGapiSurface&
-	loadImage(
-		const _TCHAR* const kpkName);
-
-	static
 	void
 	loadLevel(
-		const tstring& ksName);
-
-	static
-	Model&
-	loadModel(
 		const tstring& ksName);
 
 	// Takes a file name like "file.ext" and looks in application dir.
@@ -55,8 +57,29 @@ public:
 
 private:
 
+	static
+	Anim&
+	loadAnim(
+		const tstring& ksName);
+
+	static
+	Image&
+	loadImage(
+		const tstring& ksName);
+
+	static
+	Model&
+	loadModel(
+		const tstring& ksName);
+
 
 private:
+
+	static
+	Directory<Anim> m_animDirectory;
+
+	static
+	Directory<Image> m_imageDirectory;
 
 	static
 	Directory<Model> m_modelDirectory;

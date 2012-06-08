@@ -7,6 +7,7 @@
 
 #include "parser.h"
 
+#include "anim.h"
 #include "brush.h"
 #include "entity.h"
 #include "entity_type.h"
@@ -88,6 +89,90 @@ Parser::matchLine(
 	{
 		THROW(Exception::Parse);
 	}
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Parser::parseAnim(
+	Anim& anim)
+{
+	matchLine(_T("anim"));
+	matchLine(_T("{"));
+
+	tstring sAttributeName;
+
+	while (true)
+	{
+		if (queryLine(_T("image_name")))
+		{
+			tstring s;
+			parseAttribute(sAttributeName, s);
+			Image& image = Resourcex::getImage(s);
+			anim.setImage(image);
+		}
+		else if (queryLine(_T("size")))
+		{
+			Vec2 v;
+			parseAttribute(sAttributeName, v);
+			anim.setSize(v);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	{
+		Anim::Frame frame;
+		parseAnimFrame(frame);
+		anim.addFrame(frame);
+	}
+
+	while (queryLine(_T("frame")))
+	{
+		Anim::Frame frame;
+		parseAnimFrame(frame);
+		anim.addFrame(frame);
+	}
+
+	matchLine(_T("}"));
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Parser::parseAnimFrame(
+	Anim::Frame& frame)
+{
+	matchLine(_T("frame"));
+	matchLine(_T("{"));
+
+	tstring sAttributeName;
+
+	while (true)
+	{
+		if (queryLine(_T("index")))
+		{
+			float f;
+			parseAttribute(sAttributeName, f);
+			frame.m_nIndex = f;
+		}
+		else if (queryLine(_T("count")))
+		{
+			float f;
+			parseAttribute(sAttributeName, f);
+			frame.m_nCount = f;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	matchLine(_T("}"));
 }
 
 
@@ -249,18 +334,24 @@ Parser::parseEntity(
 
 	while (true)
 	{
-		if (queryLine(_T("colour")))
+		if (queryLine(_T("anim")))
+		{
+			Anim& anim = *new Anim();
+			parseAnim(anim);
+			entity.setAnim(anim);
+		}
+		else if (queryLine(_T("anim_name")))
+		{
+			tstring s;
+			parseAttribute(sAttributeName, s);
+			Anim& anim = Resourcex::getAnim(s);
+			entity.setAnim(anim);
+		}
+		else if (queryLine(_T("colour")))
 		{
 			Vec3 v;
 			parseAttribute(sAttributeName, v);
 			entity.getColour() = v;
-		}
-		else if (queryLine(_T("image_name")))
-		{
-			tstring s;
-			parseAttribute(sAttributeName, s);
-			CGapiSurface& image = Resourcex::loadImage(s.c_str());
-			entity.getModel().setImage(image);
 		}
 		else if (queryLine(_T("path_point")))
 		{
