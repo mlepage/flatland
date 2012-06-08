@@ -44,7 +44,7 @@
 /*******************************************************************************
 	Define this macro to turn on custom line clipping.
 *******************************************************************************/
-#define FLATLAND_ENABLE_CUSTOM_LINE_CLIPPING
+//#define FLATLAND_ENABLE_CUSTOM_LINE_CLIPPING
 
 
 /*******************************************************************************

@@ -19,10 +19,12 @@ Variable::m_variableDirectory;
 	DEF_VAR(physics_speed_limit, "16");
 	DEF_VAR(render_brush_bounds, "0");
 	DEF_VAR(render_brush_outline, "0");
+	DEF_VAR(render_console, "0");
 	DEF_VAR(render_entity_bounds, "0");
 	DEF_VAR(render_entity_identifier, "0");
 	DEF_VAR(render_entity_image, "0");
 	DEF_VAR(render_entity_velocity, "0");
+	DEF_VAR(render_frame_info, "0");
 	DEF_VAR(render_model_bounds, "0");
 	DEF_VAR(stylus_easy, "0");
 #undef DEF_VAR
@@ -40,10 +42,12 @@ Variable::init()
 	REG_VAR(physics_speed_limit);
 	REG_VAR(render_brush_bounds);
 	REG_VAR(render_brush_outline);
+	REG_VAR(render_console);
 	REG_VAR(render_entity_bounds);
 	REG_VAR(render_entity_identifier);
 	REG_VAR(render_entity_image);
 	REG_VAR(render_entity_velocity);
+	REG_VAR(render_frame_info);
 	REG_VAR(render_model_bounds);
 	REG_VAR(stylus_easy);
 #undef REG_VAR

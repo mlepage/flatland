@@ -10,6 +10,29 @@ Windows executables are provided for each milestone release. Instructions are in
 Release History
 ===============
 
+Milestone 6 - Sep 28, 2003
+--------------------------
+
+M6 is the "editor" milestone. The major feature is the beginning of a level editor.
+
+The editor currently loads an image and a model from hardcoded file names. Currently, the model doesn't match the image. This isn't a problem, as eventually you'll be creating your own model to match your own image.
+
+In the editor, you can scroll the view or access the menu as normal. You can select and move either a point or a line. Holding down the control key will allow you to select more than one point or line.
+
+Support has been added for rotated entities. The entity can be rotated at any angle, and will render and bounce correctly. However, it won't change its angle due to physical interaction (i.e. no angular forces or impulses in the simulation).
+
+There are some new graphics in the demo level.
+
+Images can now be JPEG in addition to PNG.
+
+New config variables determine whether the console and frame info are displayed.
+
+Some of the controls have changed.
+
+Menu: access with ESC, use with ARROWS/ENTER or mouse.
+Scrolling: use ARROWS; ENTER toggles autoscroll (in game).
+CTRL key: multiple selection in editor; toggle rendering in game.
+
 Milestone 5 - Sep 24, 2003
 --------------------------
 

@@ -10,8 +10,9 @@
 #include <cstdio>
 #include "console.h"
 #include "menu.h"
-#include "program_state.h"
 #include "render.h"
+#include "state_game.h"
+#include "variable.h"
 #include "view.h"
 
 
@@ -227,14 +228,19 @@ Screen::setSystemFont(
 void
 Screen::updateScreen()
 {
-	if (&ProgramState::getCurrentState() == &ProgramState::game_running)
+	// TODO maybe all this should just be in game state process frame?
+	if (StateGame::isState())
 	{
 		// TODO fix this clear so only what isn't drawn is cleared.
 		clear();
 		View::renderView();
-		drawConsole();
-		drawCenterText();
+		if (Variable::render_console.getFloatValue())
+		{
+			drawConsole();
+		}
+		if (Variable::render_frame_info.getFloatValue())
+		{
+			drawCenterText();
+		}
 	}
-
-	drawMenu();
 }

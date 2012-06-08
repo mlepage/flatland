@@ -38,10 +38,12 @@ public:
 	DECL_VAR(physics_speed_limit);
 	DECL_VAR(render_brush_bounds);
 	DECL_VAR(render_brush_outline);
+	DECL_VAR(render_console);
 	DECL_VAR(render_entity_bounds);
 	DECL_VAR(render_entity_identifier);
 	DECL_VAR(render_entity_image);
 	DECL_VAR(render_entity_velocity);
+	DECL_VAR(render_frame_info);
 	DECL_VAR(render_model_bounds);
 	DECL_VAR(stylus_easy);
 #undef DECL_VAR

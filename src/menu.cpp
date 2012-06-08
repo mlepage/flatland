@@ -6,11 +6,15 @@
 
 
 #include "menu.h"
+
 #include "game.h"
-#include "program_state.h"
+#include "state_editor.h"
+#include "state_nag.h"
+#include "state_title.h"
 
 
 #define DEF_VAR(name) Menu Menu::name(_T(#name))
+	DEF_VAR(editor);
 	DEF_VAR(game_main);
 	DEF_VAR(options);
 	DEF_VAR(title_main);
@@ -25,6 +29,18 @@ Menu::m_nCurrentItem = -1;
 
 namespace
 {
+
+
+struct EditorCommand : public Command
+{
+	virtual
+	void
+	execute()
+	{
+		StateEditor::changeState();
+		Menu::clearCurrentMenu();
+	};
+} editorCommand;
 
 
 struct EndGameCommand : public Command
@@ -65,7 +81,8 @@ struct QuitCommand : public Command
 	void
 	execute()
 	{
-		ProgramState::setCurrentState(ProgramState::quit);
+		Menu::clearCurrentMenu();
+		StateNag::changeState();
 	};
 } quitCommand;
 
@@ -83,7 +100,19 @@ struct ResumeGameCommand : public Command
 } resumeGameCommand;
 
 
-};
+struct TitleCommand : public Command
+{
+	virtual
+	void
+	execute()
+	{
+		StateTitle::changeState();
+		Menu::setCurrentMenu(Menu::title_main);
+	};
+} titleCommand;
+
+
+} // namespace
 
 
 /*******************************************************************************
@@ -126,7 +155,7 @@ Menu::init()
 		Menu::Item item(
 			_T("editor"),
 			rBounds,
-			nullCommand);
+			editorCommand);
 			Menu::title_main.addItem(item);
 	}
 	{
@@ -176,6 +205,45 @@ Menu::init()
 			rBounds,
 			quitCommand);
 		Menu::game_main.addItem(item);
+	}
+
+	// Editor.
+	rBounds = Rect(Vec2(knX1, knY), Vec2(knX2, knY + knHeight));
+	{
+		rBounds.getMin()[1] += knHeight + knVSpace;
+		rBounds.getMax()[1] += knHeight + knVSpace;
+		Menu::Item item(
+			_T("load model"),
+			rBounds,
+			nullCommand);
+		Menu::editor.addItem(item);
+	}
+	{
+		rBounds.getMin()[1] += knHeight + knVSpace;
+		rBounds.getMax()[1] += knHeight + knVSpace;
+		Menu::Item item(
+			_T("save model"),
+			rBounds,
+			nullCommand);
+		Menu::editor.addItem(item);
+	}
+	{
+		rBounds.getMin()[1] += knHeight + knVSpace;
+		rBounds.getMax()[1] += knHeight + knVSpace;
+		Menu::Item item(
+			_T("leave editor"),
+			rBounds,
+			titleCommand);
+		Menu::editor.addItem(item);
+	}
+	{
+		rBounds.getMin()[1] += knHeight + knVSpace;
+		rBounds.getMax()[1] += knHeight + knVSpace;
+		Menu::Item item(
+			_T("quit"),
+			rBounds,
+			quitCommand);
+		Menu::editor.addItem(item);
 	}
 
 	// Options.

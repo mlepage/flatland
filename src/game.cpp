@@ -12,9 +12,10 @@
 #include "console.h"
 #include "entity_type.h"
 #include "menu.h"
-#include "program_state.h"
 #include "resourcex.h"
 #include "screen.h"
+#include "state_game.h"
+#include "state_title.h"
 #include "variable.h"
 #include "world.h"
 
@@ -242,7 +243,7 @@ Game::endGame()
 	Menu::setCurrentItem(0);
 	Game::setPaused(false);
 	// Go back to title screen.
-	ProgramState::setCurrentState(ProgramState::title);
+	StateTitle::changeState();
 }
 
 
@@ -276,7 +277,7 @@ Game::getChecksum()
 void
 Game::newGame()
 {
-	ProgramState::setCurrentState(ProgramState::game_start);
+	StateGame::changeState();
 
 	// Menu.
 	Menu::clearCurrentMenu();
@@ -592,7 +593,7 @@ Game::runEntity(
 		//      model
 		if (!Game::getActiveEntity() &&
 			pPlayerEntity->m_nForceFrame + 30 <
-				ProgramState::getCurrentFrame() &&
+			Application::getActualFrameNumber() &&
 			World::isPointInEntity(
 				pPlayerEntity->getOrigin(),
 				entity))

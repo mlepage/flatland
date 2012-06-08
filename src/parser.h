@@ -14,6 +14,8 @@
 
 
 class Brush;
+class EditLine;
+class EditModel;
 class Entity;
 class Model;
 class Vec2;
@@ -36,6 +38,10 @@ public:
 	void
 	parseAnim(
 		Anim& anim);
+
+	void
+	parseEditModel(
+		EditModel& editModel);
 
 	void
 	parseEntity(
@@ -88,8 +94,17 @@ private:
 		Brush& brush);
 
 	void
+	parseEditLine(
+		EditModel& editModel,
+		EditLine& editLine);
+
+	void
 	parseVec2(
 		Vec2& v);
+
+	void
+	parseString(
+		tstring& s);
 
 
 private:

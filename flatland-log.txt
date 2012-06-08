@@ -5,10 +5,12 @@ shell: setting variable: physics_friction 0.999
 shell: setting variable: physics_speed_limit 16
 shell: setting variable: render_brush_bounds 0
 shell: setting variable: render_brush_outline 0
+shell: setting variable: render_console 0
 shell: setting variable: render_entity_bounds 0
 shell: setting variable: render_entity_identifier 0
 shell: setting variable: render_entity_velocity 0
 shell: setting variable: render_entity_image 1
+shell: setting variable: render_frame_info 0
 shell: setting variable: render_model_bounds 0
 shell: setting variable: stylus_easy 1
 Creating application.

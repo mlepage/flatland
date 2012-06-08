@@ -9,6 +9,7 @@
 
 #include "anim.h"
 #include "brush.h"
+#include "edit_model.h"
 #include "entity.h"
 #include "entity_type.h"
 #include "exception.h"
@@ -336,6 +337,131 @@ Parser::parseBrush(
 /*******************************************************************************
 *******************************************************************************/
 void
+Parser::parseEditLine(
+	EditModel& editModel,
+	EditLine& editLine)
+{
+	tstring sBeginPointName;
+	tstring sEndPointName;
+
+	if (_stscanf(
+		&m_cnLookaheadBuffer[0],
+		_T(" %128s = %*s -> %*s "),
+		&m_cnTestBuffer[0]) == 1)
+	{
+		editLine.setName(&m_cnTestBuffer[0]);
+	}
+	else
+	{
+		THROW(Exception::Parse);
+	}
+
+	if (_stscanf(
+		&m_cnLookaheadBuffer[0],
+		_T(" %*s = %128s -> %*s "),
+		&m_cnTestBuffer[0]) == 1)
+	{
+		sBeginPointName = &m_cnTestBuffer[0];
+	}
+	else
+	{
+		THROW(Exception::Parse);
+	}
+
+	if (_stscanf(
+		&m_cnLookaheadBuffer[0],
+		_T(" %*s = %*s -> %128s "),
+		&m_cnTestBuffer[0]) == 1)
+	{
+		sEndPointName = &m_cnTestBuffer[0];
+	}
+	else
+	{
+		THROW(Exception::Parse);
+	}
+
+	EditPoint* pBeginPoint = editModel.findPoint(sBeginPointName);
+	EditPoint* pEndPoint = editModel.findPoint(sEndPointName);
+
+	if (!pBeginPoint || !pEndPoint)
+	{
+		THROW(Exception::Parse);
+	}
+
+	// Hook everything up.
+	editLine.setBeginPoint(*pBeginPoint);
+	editLine.setEndPoint(*pEndPoint);
+	pBeginPoint->addLine(editLine);
+	pEndPoint->addLine(editLine);
+	editModel.addLine(editLine);
+
+	getLine();
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Parser::parseEditModel(
+	EditModel& editModel)
+{
+	matchLine(_T("edit_model"));
+	matchLine(_T("{"));
+
+	tstring sAttributeName;
+
+	// Edit points.
+	matchLine(_T("edit_points"));
+	matchLine(_T("{"));
+	while (!queryLine(_T("}")))
+	{
+		Vec2 v;
+		parseAttribute(sAttributeName, v);
+		EditPoint& editPoint = *new EditPoint;
+		editPoint.setName(sAttributeName);
+		editPoint.setPoint(v);
+		editModel.addPoint(editPoint);
+	}
+	matchLine(_T("}"));
+
+	// Edit lines.
+	matchLine(_T("edit_lines"));
+	matchLine(_T("{"));
+	while (!queryLine(_T("}")))
+	{
+		EditLine& editLine = *new EditLine;
+		parseEditLine(editModel, editLine);
+	}
+	matchLine(_T("}"));
+
+	// Edit polygons.
+	while (!queryLine(_T("}")))
+	{
+		EditPolygon& editPolygon = *new EditPolygon;
+		matchLine(_T("edit_poly"));
+		matchLine(_T("{"));
+		while (!queryLine(_T("}")))
+		{
+			parseString(sAttributeName);
+			EditLine* pEditLine = editModel.findLine(sAttributeName);
+			if (!pEditLine)
+			{
+				THROW(Exception::Parse);
+			}
+			editPolygon.addLine(*pEditLine);
+			pEditLine->addPolygon(editPolygon);
+		}
+		matchLine(_T("}"));
+		editModel.addPolygon(editPolygon);
+	}
+
+	matchLine(_T("}"));
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
 Parser::parseEntity(
 	Entity& entity)
 {
@@ -346,7 +472,13 @@ Parser::parseEntity(
 
 	while (true)
 	{
-		if (queryLine(_T("anim")))
+		if (queryLine(_T("angle")))
+		{
+			float f;
+			parseAttribute(sAttributeName, f);
+			entity.setAngle(f);
+		}
+		else if (queryLine(_T("anim")))
 		{
 			Anim& anim = *new Anim();
 			parseAnim(anim);
@@ -467,6 +599,28 @@ Parser::parseModel(
 /*******************************************************************************
 *******************************************************************************/
 void
+Parser::parseString(
+	tstring& s)
+{
+	if (_stscanf(
+		&m_cnLookaheadBuffer[0],
+		_T(" %128s "),
+		&m_cnTestBuffer[0]) == 1)
+	{
+		s = &m_cnTestBuffer[0];
+	}
+	else
+	{
+		THROW(Exception::Parse);
+	}
+
+	getLine();
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
 Parser::parseVec2(
 	Vec2& v)
 {
@@ -481,12 +635,13 @@ Parser::parseVec2(
 	{
 		v[0] = f0;
 		v[1] = f1;
-		getLine();
 	}
 	else
 	{
 		THROW(Exception::Parse);
 	}
+
+	getLine();
 }
 
 

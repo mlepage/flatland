@@ -11,7 +11,7 @@
 
 
 class Anim;
-class CGapiSurface;
+class EditModel;
 class Image;
 class Model;
 
@@ -26,6 +26,11 @@ public:
 	static
 	Anim&
 	getAnim(
+		const tstring& ksName);
+
+	static
+	EditModel&
+	getEditModel(
 		const tstring& ksName);
 
 	static
@@ -63,6 +68,11 @@ private:
 		const tstring& ksName);
 
 	static
+	EditModel&
+	loadEditModel(
+		const tstring& ksName);
+
+	static
 	Image&
 	loadImage(
 		const tstring& ksName);
@@ -77,6 +87,9 @@ private:
 
 	static
 	Directory<Anim> m_animDirectory;
+
+	static
+	Directory<EditModel> m_editModelDirectory;
 
 	static
 	Directory<Image> m_imageDirectory;

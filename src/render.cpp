@@ -21,6 +21,7 @@
 
 // testing
 #include <cmath>
+#include "console.h"
 
 
 typedef unsigned int outcode;
@@ -365,6 +366,7 @@ if (Variable::render_model_bounds.getFloatValue())
 if (Variable::render_entity_image.getFloatValue() &&
 	kEntity.hasAnim())
 {
+	// TODO clean up non-rotated entity image rendering. Too much duplication.
 	const Anim& kAnim = kEntity.getAnim();
 	CGapiSurface* pSurface =
 		&kAnim.getImage().getSurface();
@@ -424,13 +426,49 @@ if (Variable::render_entity_image.getFloatValue() &&
 		}
 	}
 
-	Screen::getBackBuffer()->BltFast(
-		vScreenOrigin[0],
-		vScreenOrigin[1],
-		pSurface,
-		&srcRect,
-		GDBLTFAST_KEYSRC,
-		NULL);
+	if (entity.getAngle() == 0)
+	{
+		Screen::getBackBuffer()->BltFast(
+			vScreenOrigin[0],
+			vScreenOrigin[1],
+			pSurface,
+			&srcRect,
+			GDBLTFAST_KEYSRC,
+			NULL);
+	}
+	else
+	{
+		// Draw rotated image.
+		RECT srcRect;
+		srcRect.top = 0;
+		srcRect.bottom = (int)kAnim.getSize()[1];
+		srcRect.left = nImageFrame * (int)kAnim.getSize()[0];
+		srcRect.right = (nImageFrame + 1) * (int)kAnim.getSize()[0];
+
+		RECT dstRect;
+		Vec2 dstRectMin =
+			Geometry::transformPoint(
+				View::getTransformW2S(),
+				entity.getBounds().getMin());
+		Vec2 dstRectMax =
+			Geometry::transformPoint(
+				View::getTransformW2S(),
+				entity.getBounds().getMax());
+		dstRect.top = dstRectMax[1];
+		dstRect.left = dstRectMin[0];
+		dstRect.bottom = dstRectMin[1];
+		dstRect.right = dstRectMax[0];
+
+		GDBLTFX fx;
+		fx.nRotationAngle = entity.getAngle() * -100;
+
+		Screen::getBackBuffer()->Blt(
+			&dstRect,
+			pSurface,
+			&srcRect,
+			GDBLTFAST_KEYSRC | GDBLT_ROTATIONANGLE,
+			&fx);
+	}
 	}
 }
 

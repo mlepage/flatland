@@ -12,6 +12,7 @@
 #include "anim.h"
 #include "console.h"
 #include "error.h"
+#include "edit_model.h"
 #include "exception.h"
 #include "file.h"
 #include "game.h"
@@ -24,6 +25,9 @@
 
 Directory<Anim>
 Resourcex::m_animDirectory;
+
+Directory<EditModel>
+Resourcex::m_editModelDirectory;
 
 Directory<Image>
 Resourcex::m_imageDirectory;
@@ -49,6 +53,26 @@ Resourcex::getAnim(
 
 	// Load the anim.
 	return loadAnim(ksName);
+}
+
+
+/*******************************************************************************
+	Returns the edit model. Loads it if necessary. Fatal error if not found.
+*******************************************************************************/
+EditModel&
+Resourcex::getEditModel(
+	const tstring& ksName)
+{
+	EditModel* pEditModel;
+
+	// Find the edit model.
+	if (pEditModel = m_editModelDirectory.find(ksName))
+	{
+		return *pEditModel;
+	}
+
+	// Load the edit model.
+	return loadEditModel(ksName);
 }
 
 
@@ -151,6 +175,43 @@ Resourcex::loadAnim(
 
 
 /*******************************************************************************
+	The edit model name is a simple name, e.g. "world".
+*******************************************************************************/
+EditModel&
+Resourcex::loadEditModel(
+	const tstring& ksName)
+{
+	const tstring ksFileName =
+		tstring(_T("data\\edits\\")) +
+		ksName +
+		tstring(_T(".txt"));
+
+	FILE* pFile = File::openFile(ksFileName, _T("r"));
+
+	EditModel& editModel = *new EditModel();
+	editModel.setName(ksName);
+	m_editModelDirectory.insert(ksName, editModel);
+
+	TRY
+	{
+		Parser parser(pFile);
+		parser.parseEditModel(editModel);
+	}
+	CATCHALL
+	{
+		m_editModelDirectory.erase(ksName);
+		delete &editModel;
+		RETHROW;
+	}
+	END_TRY_CATCHALL
+
+	File::closeFile(pFile);
+
+	return editModel;
+}
+
+
+/*******************************************************************************
 	The image name is a simple name, e.g. "world".
 *******************************************************************************/
 Image&
@@ -161,6 +222,10 @@ Resourcex::loadImage(
 		tstring(_T("data\\images\\")) +
 		ksName +
 		tstring(_T(".png"));
+	const tstring ksFileName2 =
+		tstring(_T("data\\images\\")) +
+		ksName +
+		tstring(_T(".jpg"));
 
 	Image& image = *new Image();
 	image.setName(ksName);
@@ -170,6 +235,14 @@ Resourcex::loadImage(
 		image.getSurface().CreateSurface(
 			0,
 			File::makeFileName(ksFileName).c_str());
+	if (result != GD_OK)
+	{
+		// Try again.
+		result =
+			image.getSurface().CreateSurface(
+				0,
+				File::makeFileName(ksFileName2).c_str());
+	}
 	if (result != GD_OK)
 	{
 		m_imageDirectory.erase(ksName);

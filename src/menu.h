@@ -62,6 +62,7 @@ public:
 public:
 
 #define DECL_VAR(name) static Menu name
+	DECL_VAR(editor);
 	DECL_VAR(game_main);
 	DECL_VAR(options);
 	DECL_VAR(title_main);

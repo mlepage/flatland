@@ -2,105 +2,139 @@
 // Copyright (C) 2003 Marc A. Lepage.
 
 
-#pragma warning(disable: 4786)
+#ifndef GUARD__EDIT_LINE
+#define GUARD__EDIT_LINE
 
 
-#include "stylus.h"
+#include <vector>
+#include "tstring.h"
 
 
-bool
-Stylus::m_bDown = false;
-
-Vec2
-Stylus::m_vAnchorPoint;
-
-Vec2
-Stylus::m_vLeadPoint;
+class EditPoint;
+class EditPolygon;
 
 
 /*******************************************************************************
 *******************************************************************************/
+class EditLine
+{
+
+public:
+
+	void
+	addPolygon(
+		EditPolygon& polygon);
+
+	EditPoint&
+	getBeginPoint();
+
+	EditPoint&
+	getEndPoint();
+
+	const tstring&
+	getName() const;
+
+	void
+	setBeginPoint(
+		EditPoint& beginPoint);
+
+	void
+	setEndPoint(
+		EditPoint& endPoint);
+
+	void
+	setName(
+		const tstring& ksName);
+
+
+private:
+
+	// The name.
+	tstring m_sName;
+
+	EditPoint* m_beginPoint;
+
+	EditPoint* m_endPoint;
+
+	std::vector<EditPolygon*> m_cpPolygon;
+
+
+};
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
 void
-Stylus::doubleClick(
-	const Vec2& kvScreenPoint)
+EditLine::addPolygon(
+	EditPolygon& polygon)
 {
+	// TODO Maybe should ensure that only two polygons are added.
+	m_cpPolygon.push_back(&polygon);
 }
 
 
 /*******************************************************************************
 *******************************************************************************/
+inline
+EditPoint&
+EditLine::getBeginPoint()
+{
+	return *m_beginPoint;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+EditPoint&
+EditLine::getEndPoint()
+{
+	return *m_endPoint;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+const tstring&
+EditLine::getName() const
+{
+	return m_sName;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
 void
-Stylus::down(
-	const Vec2& kvScreenPoint)
+EditLine::setBeginPoint(
+	EditPoint& beginPoint)
 {
-	m_bDown = true;
-	m_vAnchorPoint = kvScreenPoint;
-	m_vLeadPoint = kvScreenPoint;
+	m_beginPoint = &beginPoint;
 }
 
 
 /*******************************************************************************
 *******************************************************************************/
-const Vec2&
-Stylus::getAnchorPoint()
-{
-	return m_vAnchorPoint;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-const Vec2&
-Stylus::getLeadPoint()
-{
-	return m_vLeadPoint;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-bool
-Stylus::isDown()
-{
-	return m_bDown;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
+inline
 void
-Stylus::move(
-	const Vec2& kvScreenPoint)
+EditLine::setEndPoint(
+	EditPoint& endPoint)
 {
-	m_vLeadPoint = kvScreenPoint;
+	m_endPoint = &endPoint;
 }
 
 
 /*******************************************************************************
 *******************************************************************************/
+inline
 void
-Stylus::setAnchorPoint(
-	const Vec2& kvScreenPoint)
+EditLine::setName(
+	const tstring& ksName)
 {
-	m_vAnchorPoint = kvScreenPoint;
+	m_sName = ksName;
 }
 
 
-/*******************************************************************************
-*******************************************************************************/
-void
-Stylus::setLeadPoint(
-	const Vec2& kvScreenPoint)
-{
-	m_vLeadPoint = kvScreenPoint;
-}
-
-
-/*******************************************************************************
-*******************************************************************************/
-void
-Stylus::up(
-	const Vec2& kvScreenPoint)
-{
-	m_bDown = false;
-}
+#endif // GUARD
