@@ -10,6 +10,7 @@
 #include "model.h"
 #include "rect.h"
 #include "screen.h"
+#include "variable.h"
 #include "view.h"
 #include "world.h"
 
@@ -67,6 +68,7 @@ Render::drawLine(
 	const double ymax,
 	COLORREF dwColor)
 {
+#ifdef FLATLAND_ENABLE_CUSTOM_LINE_CLIPPING
 	outcode outcode0;
 	outcode outcode1;
 	outcode outcodeOut;
@@ -160,6 +162,26 @@ Render::drawLine(
 			0,
 			NULL);
 	}
+#else
+		// Rely on built-in line clipping.
+		CGapiSurface* pBackBuffer = Screen::getBackBuffer();
+		pBackBuffer->DrawLine(
+			x0,
+			y0,
+			x1,
+			y1,
+			dwColor,
+			0,
+			NULL);
+#endif
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Render::init()
+{
 }
 
 
@@ -191,7 +213,8 @@ Render::renderFrame()
 			continue;
 		}
 
-#if 1
+if (Variable::render_entity_bounds.getFloatValue())
+{
 		// TEST draw entity bounds.
 		{
 			COLORREF dwBoundsColour = RGB(63, 0, 0);
@@ -256,7 +279,7 @@ Render::renderFrame()
 					krScreenView.getMax()[1],
 					dwBoundsColour);
 		}
-#endif
+}
 
 		// PERF
 		// For immobile entities, it may be faster to skip the entity bounds
@@ -273,7 +296,8 @@ Render::renderFrame()
 
 		// TODO need a way to check against model bounding box.
 
-#if 1
+if (Variable::render_model_bounds.getFloatValue())
+{
 		// TEST draw model bounds.
 		{
 				COLORREF dwBoundsColour = RGB(0, 63, 0);
@@ -331,7 +355,54 @@ Render::renderFrame()
 					krScreenView.getMax()[1],
 					dwBoundsColour);
 		}
-#endif
+}
+
+if (Variable::render_entity_image.getFloatValue())
+{
+	// Entity image.
+	CGapiSurface* pSurface =
+		const_cast<CGapiSurface*>(&kEntity.getModel().getImage());
+	// Screen origin and size.
+	Vec2 vScreenOrigin = View::getScreenView().getMin();
+	Vec2 vScreenViewSize =
+		View::getScreenView().getMax() - View::getScreenView().getMin();
+	// Set the source rect to the view in image coordinates.
+	RECT srcRect;
+	srcRect.top =
+		kEntity.getBounds().getMax()[1] -
+		View::getWorldView().getMax()[1];
+	srcRect.left =
+		View::getWorldView().getMin()[0] -
+		kEntity.getBounds().getMin()[0];
+	srcRect.bottom = srcRect.top + vScreenViewSize[1];
+	srcRect.right = srcRect.left + vScreenViewSize[0];
+	// Clip the source rect to the image.
+	if (srcRect.top < 0)
+	{
+		vScreenOrigin[1] -= srcRect.top;
+		srcRect.top = 0;
+	}
+	if (srcRect.left < 0)
+	{
+		vScreenOrigin[0] -= srcRect.left;
+		srcRect.left = 0;
+	}
+	if (pSurface->GetHeight() < srcRect.bottom)
+	{
+		srcRect.bottom = pSurface->GetHeight();
+	}
+	if (pSurface->GetWidth() < srcRect.right)
+	{
+		srcRect.right = pSurface->GetWidth();
+	}
+	Screen::getBackBuffer()->BltFast(
+		vScreenOrigin[0],
+		vScreenOrigin[1],
+		pSurface,
+		&srcRect,
+		GDBLTFAST_KEYSRC,
+		NULL);
+}
 
 		COLORREF dwColor =
 			(&kEntity == Game::getActiveEntity()) ?
@@ -350,6 +421,9 @@ Render::renderFrame()
 				Geometry::transformPoint(
 					kmTransformM2S,
 					Vec2(0, 0));
+
+if (Variable::render_entity_velocity.getFloatValue())
+{
 			Vec2 vVelocitySecond =
 				kEntity.getVelocity() * 30;
 			Vec2 vEnd =
@@ -367,7 +441,10 @@ Render::renderFrame()
 				krScreenView.getMin()[1],
 				krScreenView.getMax()[1],
 				dwBoundsColour);
+}
 
+if (Variable::render_entity_identifier.getFloatValue())
+{
 			_TCHAR an[16];
 			_stprintf(
 				an,
@@ -378,8 +455,12 @@ Render::renderFrame()
 				vOrigin[0],
 				vOrigin[1] - 2,
 				an,
+				Screen::getSystemFont(),
 				GDDRAWTEXT_CENTER,
+				NULL,
+				0,
 				NULL);
+}
 		}
 
 		for (int nBrushIndex(0);
@@ -390,7 +471,8 @@ Render::renderFrame()
 
 			// TODO need a way to check against brush bounding box.
 
-#if 1
+if (Variable::render_brush_bounds.getFloatValue())
+{
 			// TEST draw brush bounds.
 			{
 				COLORREF dwBoundsColour = RGB(0, 0, 63);
@@ -448,8 +530,10 @@ Render::renderFrame()
 					krScreenView.getMax()[1],
 					dwBoundsColour);
 			}
-#endif
+}
 
+if (Variable::render_brush_outline.getFloatValue())
+{
 			// PERF
 			// Right now we are clipping and drawing each line in succession.
 			// That means each point is clipped twice. It may be faster to
@@ -481,6 +565,7 @@ Render::renderFrame()
 
 				v1 = v2;
 			}
+}
 		}
 	}
 }

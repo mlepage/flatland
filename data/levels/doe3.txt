@@ -1,0 +1,31 @@
+entity
+{
+	model = doe
+	mobile = 0
+	colour = <0, 0, 127>
+}
+entity
+{
+	model = ufo
+	colour = <127, 127, 0>
+	mobile = 1
+	position = <300, 50>
+	velocity = <1, 2>
+}
+entity
+{
+	model = ufo
+	colour = <127, 127, 0>
+	mobile = 1
+	position = <350, 250>
+	velocity = <-2, -1>
+}
+entity
+{
+	model = ufo
+	colour = <127, 127, 0>
+	mobile = 1
+	position = <450, 150>
+	velocity = <-1, -1>
+}
+

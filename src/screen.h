@@ -43,6 +43,10 @@ public:
 	CGapiSurface*
 	getBackBuffer();
 
+	static
+	CGapiBitmapFont*
+	getSystemFont();
+
 	// Call like this: print(_T("name=%s \n"), _T("value"));
 	static
 	int
@@ -54,6 +58,11 @@ public:
 	void
 	setBackBuffer(
 		CGapiSurface* const kpBackBuffer);
+
+	static
+	void
+	setSystemFont(
+		CGapiBitmapFont* const kpSystemFont);
 
 	static
 	void
@@ -73,6 +82,8 @@ private:
 	static
 	CGapiSurface* m_pBackBuffer;
 
+	static
+	CGapiBitmapFont* Screen::m_pSystemFont;
 };
 
 

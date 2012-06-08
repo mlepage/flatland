@@ -288,8 +288,8 @@ World::traceEntity(
 	// 1.0001 appears to be not enough.
 	// 1.01 appears to be not enough.
 	Rect rEndBounds = entity.getBounds();
-	rEndBounds.getMin() += entity.getVelocity() * 1.1;
-	rEndBounds.getMax() += entity.getVelocity() * 1.1;
+	rEndBounds.getMin() += entity.getVelocity() * 1.1f;
+	rEndBounds.getMax() += entity.getVelocity() * 1.1f;
 
 	// The bounds of the move, in world coordinates.
 	Rect rMoveBounds = entity.getBounds();

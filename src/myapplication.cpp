@@ -11,19 +11,46 @@
 #include "resource.h"
 
 #include "console.h"
+#include "exception.h"
+#include "file.h"
 #include "game.h"
 #include "key.h"
+#include "render.h"
+#include "resourcex.h"
 #include "screen.h"
+#include "shell.h"
 #include "stylus.h"
 #include "test.h"
+#include "variable.h"
 #include "view.h"
 #include "world.h"
 
-// TEST
-#include "matrix.h"
+
+#pragma comment(lib, "gd204.lib")
 
 
-#pragma comment(lib, "gd201b.lib")
+void
+doConfigFile()
+{
+	// Feed the config file to the shell interpreter.
+	FILE* pFile = File::openFile(_T("flatland-cfg.txt"), _T("r"));
+	if (!pFile)
+	{
+		return;
+	}
+
+	_TCHAR line[256];
+
+	while (_fgetts(
+		line,
+		256,
+		pFile))
+	{
+		Shell::doCommand(line);
+	}
+
+	File::closeFile(pFile);
+}
 
 
 //-----------------------------------------------------------------------------
@@ -33,32 +60,39 @@
 //-----------------------------------------------------------------------------
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPTSTR pCmdLine, int nCmdShow)
 {
+	// Initialization.
+	Variable::init();
+	Resourcex::init();
+	Console::init();
+	Render::init();
+	View::init();
+
+#ifdef FLATLAND_ENABLE_TEST
+	Console::print(_T("Performing automated tests.\n"));
+	Test::test();
+#endif
+
+	// Load and execute the config file here, for now.
+	doConfigFile();
+
 	GDAPPCONFIG config;
 	::ZeroMemory(&config, sizeof(GDAPPCONFIG));
 
 	config.hInstance           = hInst;
-	config.pAppTitle           = TEXT("Flatland");
+	config.pAppTitle           = _T("Flatland");
 	config.dwWindowIcon        = IDI_APP;
 	config.dwDisplayMode       = GDDISPMODE_NORMAL;
-	config.dwTargetFPS         = 90;
+	config.dwTargetFPS         = 30;
 	config.dwDisplayFlags      = GDDISPLAY_WINDOW;
 	config.dwWindowBorder      = WS_DLGFRAME;
 	config.dwDisplayWidth      = 240;
 	config.dwDisplayHeight     = 320;
 
 	// Create the application
+	Console::print(_T("Creating application.\n"));
 	CMyApplication app(config);
 
-	// Initialization.
-	Console::init();
-
-	// These are not unit tests, they just set up a temporary world.
-	Game::makeTestWorld();
-	View::makeTestView();
-
-#ifdef FLATLAND_ENABLE_TEST
-	Test::test();
-#endif
+	Console::print(_T("Flatland initialized.\n"));
 
 	// Start main loop
 	return app.Run();
@@ -84,6 +118,16 @@ HRESULT CMyApplication::ExitInstance()
 
 HRESULT CMyApplication::CreateSurfaces(CGapiDisplay& display, HINSTANCE hInstance)
 {
+	Screen::setSystemFont(display.GetSystemFont());
+
+#if 0
+	// Load images here for now, because we need to have a primary.
+	Game::getEntity(0).getModel().setImage(
+		Resourcex::loadImage(Game::getEntity(0).getModel().getName().c_str()));
+	Game::getEntity(1).getModel().setImage(
+		Resourcex::loadImage(Game::getEntity(1).getModel().getName().c_str()));
+#endif
+
 	return S_OK;
 }
 
@@ -96,14 +140,15 @@ HRESULT DrawFrameInfo(CGapiSurface& surface, DWORD dwY, const TCHAR* pText, COLO
 	GDFILLRECTFX fillrectfx;
 	fillrectfx.dwOpacity = 128;
 
-	surface.DrawText(0, 0, pText, GDDRAWTEXT_CALCWIDTH, &strWidth);
+	Screen::getSystemFont()->GetStringWidth(pText, &strWidth);
 	::SetRect(&rect, 0, dwY-1, strX+strWidth+3, dwY+8);
 
 	surface.DrawLine(0, dwY-2, strX+strWidth+3, dwY-2, RGB(0, 0, 0), 0, NULL);
 	surface.DrawLine(strX+strWidth+3, dwY-2, strX+strWidth+3, dwY+8, RGB(0, 0, 0), 0, NULL);
 	surface.DrawLine(0, dwY+8, strX+strWidth+3, dwY+8, RGB(0, 0, 0), 0, NULL);
 	surface.FillRect(&rect, color, GDFILLRECT_OPACITY, &fillrectfx);
-	surface.DrawText(strX, dwY, pText, GDDRAWTEXT_BORDER, NULL);
+	surface.DrawText(strX, dwY, pText, Screen::getSystemFont(),
+		0, NULL, 0, NULL);
 
 	return S_OK;
 }
@@ -117,6 +162,17 @@ CMyApplication::ProcessNextFrame(
 	CGapiSurface& backbuffer,
 	DWORD dwFlags)
 {
+	static bool bFirstTime = true;
+	if (bFirstTime)
+	{
+		bFirstTime = false;
+		Console::print(_T("Loading level\n"));
+		Resourcex::loadLevel(Variable::first_level.getValue());
+	}
+
+#ifndef FLATLAND_ENABLE_CUSTOM_LINE_CLIPPING
+	backbuffer.SetClipper(NULL);
+#endif
 	Screen::setBackBuffer(&backbuffer);
 
 	// Move the active entity via the stylus. This needs to be before runFrame
@@ -158,6 +214,59 @@ CMyApplication::ProcessNextFrame(
 		m_config.dwTargetFPS = 30;
 		Screen::updateScreen();
 	}
+
+
+#if 0
+	// Blast world to screen.
+	// Screen origin and size.
+	Vec2 vScreenOrigin = View::getScreenView().getMin();
+	Vec2 vScreenViewSize =
+		View::getScreenView().getMax() - View::getScreenView().getMin();
+	// Set the source rect to the view in image coordinates.
+	RECT srcRect;
+	srcRect.top =
+		Game::getEntity(0).getBounds().getMax()[1] -
+		View::getWorldView().getMax()[1];
+	srcRect.left =
+		View::getWorldView().getMin()[0] -
+		Game::getEntity(0).getBounds().getMin()[0];
+	srcRect.bottom = srcRect.top + vScreenViewSize[1];
+	srcRect.right = srcRect.left + vScreenViewSize[0];
+	// Clip the source rect to the image.
+	if (srcRect.top < 0)
+	{
+		vScreenOrigin[1] -= srcRect.top;
+		srcRect.top = 0;
+	}
+	if (srcRect.left < 0)
+	{
+		vScreenOrigin[0] -= srcRect.left;
+		srcRect.left = 0;
+	}
+	if (m_world.GetHeight() < srcRect.bottom)
+	{
+		srcRect.bottom = m_world.GetHeight();
+	}
+	if (m_world.GetWidth() < srcRect.right)
+	{
+		srcRect.right = m_world.GetWidth();
+	}
+	backbuffer.BltFast(
+		vScreenOrigin[0],
+		vScreenOrigin[1],
+		&m_world,
+		&srcRect,
+		0,
+		NULL);
+#endif
+#if 0
+	// Blast circle to screen.
+//	BltFast( 
+//LONG destX, LONG destY, 
+//CGapiSurface* pSrcSurface, RECT* pSrcRect, 
+//DWORD dwFlags, GDBLTFASTFX* pGDBltFastFx); 
+	backbuffer.BltFast(200, 200, &m_circle, NULL, 0, NULL);
+#endif
 
 #if 0
 	// Preliminary performance testing code
@@ -210,15 +319,15 @@ HRESULT CMyApplication::KeyDown(DWORD dwKey, GDKEYLIST& keylist)
 
 	if (dwKey == keylist.vkA)
 	{
-		Shutdown();
+		Game::setPaused(!Game::isPaused());
 	}
 	else if (dwKey == keylist.vkB)
 	{
-		Game::setPaused(!Game::isPaused());
+		Game::runFrame();
 	}
 	else if (dwKey == keylist.vkC)
 	{
-		Game::runFrame();
+		Shutdown();
 	}
 	else if (dwKey == keylist.vkUp)
 	{
@@ -242,11 +351,7 @@ HRESULT CMyApplication::KeyDown(DWORD dwKey, GDKEYLIST& keylist)
 
 HRESULT CMyApplication::KeyUp(DWORD dwKey, GDKEYLIST& keylist)
 {
-	if (dwKey == keylist.vkA)
-	{
-		Shutdown();
-	}
-	else if (dwKey == keylist.vkUp)
+	if (dwKey == keylist.vkUp)
 	{
 		Key::keyUp(Key::m_knKeyUp);
 	}

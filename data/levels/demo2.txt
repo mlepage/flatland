@@ -1,0 +1,22 @@
+entity
+{
+	model = demo
+	mobile = 0
+	colour = <0, 0, 127>
+}
+entity
+{
+	model = ufo
+	colour = <127, 0, 0>
+	mobile = 1
+	position = <100, 100>
+	velocity = <-1, -1>
+}
+entity
+{
+	model = ufo
+	colour = <0, 127, 0>
+	mobile = 1
+	position = <150, 150>
+	velocity = <1, -1>
+}

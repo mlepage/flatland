@@ -68,11 +68,11 @@ View::getWorldView()
 /*******************************************************************************
 *******************************************************************************/
 void
-View::makeTestView()
+View::init()
 {
 	setViewSize(Vec2(239, 319));
 	setScreenViewOrigin(Vec2(0, 0));
-	setWorldViewOrigin(Vec2(-50, -50));
+	setWorldViewOrigin(Vec2(0, 0));
 }
 
 

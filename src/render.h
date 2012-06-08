@@ -39,6 +39,10 @@ public:
 
 	static
 	void
+	init();
+
+	static
+	void
 	renderFrame();
 
 

@@ -9,6 +9,20 @@
 #include <limits>
 
 
+#define FLATLAND_PARSE_MAX 128
+
+#define FLATLAND_VARIABLE_NAME_MAX 64
+#define FLATLAND_VARIABLE_VALUE_MAX 256
+
+#define FLATLAND_FILENAME_MAX 1024
+
+
+/*******************************************************************************
+	The maximum length of a name.
+*******************************************************************************/
+#define FLATLAND_MAX_NAME 32
+
+
 /*******************************************************************************
 	Define this macro to turn on logging.
 *******************************************************************************/
@@ -25,6 +39,12 @@
 	Define this macro to turn on the max distance in effective radius.
 *******************************************************************************/
 //#define FLATLAND_ENABLE_EFFECTIVE_RADIUS_MAX
+
+
+/*******************************************************************************
+	Define this macro to turn on custom line clipping.
+*******************************************************************************/
+#define FLATLAND_ENABLE_CUSTOM_LINE_CLIPPING
 
 
 /*******************************************************************************
@@ -53,6 +73,11 @@
 #define FLATLAND_CONSOLE_PRINT_BUFFER_SIZE 1024
 #define FLATLAND_CONSOLE_TEXT_LINE_SIZE 48
 #define FLATLAND_CONSOLE_TEXT_BUFFER_SIZE 100
+
+
+#define FLATLAND_PARSER_LINE_SIZE 512
+
+#define FLATLAND_EXCEPTION_MAX 32
 
 
 #endif // GUARD

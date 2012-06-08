@@ -177,7 +177,7 @@ Entity::Entity() :
 	m_fMass(1),
 	m_fAngle(0),
 	m_fOldAngle(0),
-	m_bMobile(false),
+	m_bMobile(true),
 	m_mTransformModelToWorld(1, 0, 0, 0, 1, 0, 0, 0, 1),
 	m_mTransformWorldToModel(1, 0, 0, 0, 1, 0, 0, 0, 1)
 {

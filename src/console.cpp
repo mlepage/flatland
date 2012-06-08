@@ -7,6 +7,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include "config.h"
+#include "resourcex.h"
 
 
 namespace
@@ -19,7 +20,7 @@ namespace
 
 	int nTextCurrentLine;
 
-	FILE* pLogFile;
+	FILE* pLogFile = NULL;
 }
 
 
@@ -60,7 +61,7 @@ Console::init()
 
 	nTextCurrentLine = -1;
 
-	pLogFile = _tfopen(_T("flatland.log"), _T("w"));
+	pLogFile = Resourcex::openFile(_T("flatland-log.txt"), _T("w"));
 
 	Console::print(_T("Console initialized.\n"));
 }
@@ -111,7 +112,10 @@ Console::print(
 	}
 
 	// Copy to the log.
-	_ftprintf(pLogFile, _T("%s"), anPrintBuffer);
+	if (pLogFile)
+	{
+		_ftprintf(pLogFile, _T("%s"), anPrintBuffer);
+	}
 
 	return knResult;
 }

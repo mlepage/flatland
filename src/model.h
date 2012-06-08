@@ -8,8 +8,13 @@
 
 #include <vector>
 #include "brush.h"
+#include "config.h"
 #include "geometry.h"
 #include "rect.h"
+#include "tstring.h"
+
+
+class CGapiSurface;
 
 
 /*******************************************************************************
@@ -20,6 +25,8 @@ class Model
 
 
 public:
+
+	Model();
 
 	void
 	addBrush(
@@ -32,11 +39,31 @@ public:
 	getBrush(
 		const int knIndex) const;
 
+	const CGapiSurface&
+	getImage() const;
+
+	const tstring&
+	getName() const;
+
 	int
 	getNumberOfBrushes() const;
 
+	void
+	setImage(
+		const CGapiSurface& kImage);
+
+	void
+	setName(
+		const tstring& ksName);
+
 
 private:
+
+	// The name.
+	tstring m_sName;
+
+	// The image.
+	const CGapiSurface* m_pkImage;
 
 	// The bounding box.
 	Rect m_rBounds;
@@ -46,6 +73,15 @@ private:
 
 
 };
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+Model::Model() :
+	m_pkImage(0)
+{
+}
 
 
 /*******************************************************************************
@@ -95,10 +131,52 @@ Model::getBrush(
 /*******************************************************************************
 *******************************************************************************/
 inline
+const CGapiSurface&
+Model::getImage() const
+{
+	return *m_pkImage;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+const tstring&
+Model::getName() const
+{
+	return m_sName;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
 int
 Model::getNumberOfBrushes() const
 {
 	return m_cBrush.size();
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+void
+Model::setImage(
+	const CGapiSurface& kImage)
+{
+	m_pkImage = &kImage;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+void
+Model::setName(
+	const tstring& ksName)
+{
+	m_sName = ksName;
 }
 
 

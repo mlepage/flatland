@@ -50,7 +50,7 @@ public:
 
 	static
 	void
-	makeTestWorld();
+	makeTestLevel();
 
 	static
 	bool
@@ -117,11 +117,15 @@ private:
 
 	static
 	void
-	makeTestWorld1();
+	makeTestLevel1();
 
 	static
 	void
-	makeTestWorld2();
+	makeTestLevel2();
+
+	static
+	void
+	makeTestLevel3();
 
 	static
 	void

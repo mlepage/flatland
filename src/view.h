@@ -43,7 +43,7 @@ public:
 
 	static
 	void
-	makeTestView();
+	init();
 
 	static
 	void

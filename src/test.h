@@ -27,6 +27,10 @@ public:
 
 	static
 	void
+	testException();
+
+	static
+	void
 	testGeometry();
 
 	static

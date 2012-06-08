@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include "console.h"
+#include "resourcex.h"
 #include "screen.h"
 #include "world.h"
 
@@ -14,7 +15,7 @@ bool
 Game::m_bFast = false;
 
 bool
-Game::m_bPaused = true;
+Game::m_bPaused = false;
 
 int
 Game::m_nFrame = 0;
@@ -71,7 +72,7 @@ void
 Game::checkIntegrity()
 {
 	checkForEscapedEntities();
-	checkInterpenetrationSimple();
+	//checkInterpenetrationSimple();
 }
 
 
@@ -221,10 +222,11 @@ Game::getChecksum()
 /*******************************************************************************
 *******************************************************************************/
 void
-Game::makeTestWorld()
+Game::makeTestLevel()
 {
-	//makeTestWorld1();
-	makeTestWorld2();
+	//makeTestLevel1();
+	//makeTestLevel2();
+	makeTestLevel3();
 }
 
 
@@ -235,7 +237,7 @@ Game::makeTestWorld()
 	The test world consists of 5 brushes: 1 in the center and 4 on the edges.
 *******************************************************************************/
 void
-Game::makeTestWorld1()
+Game::makeTestLevel1()
 {
 	Model* pWorldModel = new Model();
 	{
@@ -416,7 +418,7 @@ Game::makeTestWorld1()
 	Each room contains four entities.
 *******************************************************************************/
 void
-Game::makeTestWorld2()
+Game::makeTestLevel2()
 {
 	// World parameters.
 	const int knRoomWidth = 240;
@@ -443,7 +445,7 @@ Game::makeTestWorld2()
 
 	Model* pEntityModel = new Model();
 	{
-		const int kfDiagonal = kfEntityRadius * sqrt(2) / 2;
+		const scalar kfDiagonal = kfEntityRadius * sqrt(2) / 2;
 		Brush brush;
 		brush.addVertex(Vec2(0, kfEntityRadius));
 		brush.addVertex(Vec2(-kfDiagonal, kfDiagonal));
@@ -638,7 +640,7 @@ Game::makeTestWorld2()
 	Entity* pWorldEntity = &Game::spawnEntity();
 	pWorldEntity->getColour() = Vec3(127, 127, 127);
 
-	// NW room.
+	// NE room.
 	BEGIN_ROOM(0, 0);
 	COPY_BRUSH(0);
 	//COPY_BRUSH(1);
@@ -650,7 +652,7 @@ Game::makeTestWorld2()
 	//COPY_BRUSH(7);
 	END_ROOM();
 
-	// NE room.
+	// NW room.
 	BEGIN_ROOM(-knRoomWidth, 0);
 	COPY_BRUSH(0);
 	//COPY_BRUSH(1);
@@ -690,36 +692,241 @@ Game::makeTestWorld2()
 	pWorldEntity->setBounds(pWorldModel->getBounds());
 
 #if 0
+	// Diamond model.
+	FILE* pFile = _tfopen(_T("diamond.fmd"), _T("r"));
+	Model* pDiamondModel = new Model();
+	Reader::readModel(pFile, *pDiamondModel);
+#endif
+
+#if 0
 	{
 		// Last known state from frame 39467.
 		Entity* pEntity = &Game::spawnEntity();
-		pEntity->setModel(pEntityModel);
+		pEntity->setModel(pDiamondModel);
 		pEntity->setMobile(true);
 		pEntity->getColour() = Vec3(0, 255, 255);
 		pEntity->getOrigin() = Vec2(100, 100);
 		pEntity->getVelocity() = Vec2(0, 0);
 		World::linkEntity(*pEntity);
-		Game::debugSetEntityState(*pEntity, 1116935872, 1116523338, 1058486036, 1073472374);
-	}
-	{
-		Entity* pEntity = &Game::spawnEntity();
-		pEntity->setModel(pEntityModel);
-		pEntity->setMobile(true);
-		pEntity->getColour() = Vec3(0, 255, 255);
-		pEntity->getOrigin() = Vec2(-100, -100);
-		pEntity->getVelocity() = Vec2(0, 0);
-		World::linkEntity(*pEntity);
-	}
-	{
-		Entity* pEntity = &Game::spawnEntity();
-		pEntity->setModel(pEntityModel);
-		pEntity->setMobile(true);
-		pEntity->getColour() = Vec3(0, 255, 255);
-		pEntity->getOrigin() = Vec2(-150, -150);
-		pEntity->getVelocity() = Vec2(0, 0);
-		World::linkEntity(*pEntity);
+		//Game::debugSetEntityState(*pEntity, 1116935872, 1116523338, 1058486036, 1073472374);
 	}
 #endif
+
+#if 0
+	// Dump world to console for making model file.
+	const Model* kpDumpModel = pEntityModel;
+	for (int nBrushIndex = 0;
+		nBrushIndex != kpDumpModel->getNumberOfBrushes();
+		++nBrushIndex)
+	{
+		const Brush& kBrush = kpDumpModel->getBrush(nBrushIndex);
+
+		Console::print(_T("\tbrush\n"));
+		Console::print(_T("\t{\n"));
+
+		for (int nVertexIndex = 0;
+			nVertexIndex != kBrush.getNumberOfVertices();
+			++nVertexIndex)
+		{
+			const Vec2& kv = kBrush.getVertex(nVertexIndex);
+
+			Console::print(_T("\t\t<%f, %f>\n"), kv[0], kv[1]);
+		}
+
+		Console::print(_T("\t}\n"));
+	}
+#endif
+}
+
+
+/*******************************************************************************
+	This world is the same as test level 2, but loads the world from "world"
+	files, and the user entity from "user" files.
+*******************************************************************************/
+void
+Game::makeTestLevel3()
+{
+	// World parameters.
+	const int knRoomWidth = 240;
+	const int knRoomHeight = 320;
+	const int knHorizontalPassageWidth = 20;
+	const int knHorizontalPassageHeight = 100;
+	const int knVerticalPassageWidth = 100;
+	const int knVerticalPassageHeight = 20;
+	const scalar kfEntityRadius = 10;
+
+	// Coordinates of interest.
+	const int knX0 = 0;
+	const int knX1 = knHorizontalPassageWidth;
+	const int knX2 = (knRoomWidth / 2) - (knVerticalPassageWidth / 2);
+	const int knX3 = (knRoomWidth / 2) + (knVerticalPassageWidth / 2);
+	const int knX4 = knRoomWidth - knHorizontalPassageWidth;
+	const int knX5 = knRoomWidth;
+	const int knY0 = 0;
+	const int knY1 = knVerticalPassageHeight;
+	const int knY2 = (knRoomHeight / 2) - (knHorizontalPassageHeight / 2);
+	const int knY3 = (knRoomHeight / 2) + (knHorizontalPassageHeight / 2);
+	const int knY4 = knRoomHeight - knVerticalPassageHeight;
+	const int knY5 = knRoomHeight;
+
+	// Load models.
+	const Model& kWorldModel = Resourcex::loadModel(_T("world"));
+	const Model& kUserModel = Resourcex::loadModel(_T("user"));
+
+	// Create world entity.
+	{
+		Entity& entity = Game::spawnEntity();
+		entity.setModel(const_cast<Model*>(&kWorldModel));
+		entity.setMobile(false);
+		entity.getColour() = Vec3(127, 127, 127);
+		entity.setBounds(kWorldModel.getBounds());
+	}
+
+	// Create user entities.
+	{
+		const int knXOff = 0;
+		const int knYOff = 0;
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX2 + 0, knYOff + knY2 + 5);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX2 + 1, knYOff + knY3 + 3);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX3 + 3, knYOff + knY2 + 1);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX3 + 5, knYOff + knY3 + 0);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+	}
+	{
+		const int knXOff = -240;
+		const int knYOff = 0;
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX2 + 0, knYOff + knY2 + 5);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX2 + 1, knYOff + knY3 + 3);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX3 + 3, knYOff + knY2 + 1);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX3 + 5, knYOff + knY3 + 0);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+	}
+	{
+		const int knXOff = -240;
+		const int knYOff = -320;
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX2 + 0, knYOff + knY2 + 5);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX2 + 1, knYOff + knY3 + 3);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX3 + 3, knYOff + knY2 + 1);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX3 + 5, knYOff + knY3 + 0);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+	}
+	{
+		const int knXOff = 0;
+		const int knYOff = -320;
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX2 + 0, knYOff + knY2 + 5);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX2 + 1, knYOff + knY3 + 3);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX3 + 3, knYOff + knY2 + 1);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+		{
+			Entity& entity = Game::spawnEntity();
+			entity.setModel(const_cast<Model*>(&kUserModel));
+			entity.getColour() = Vec3(255, 0, 255);
+			entity.getOrigin() = Vec2(knXOff + knX3 + 5, knYOff + knY3 + 0);
+			entity.getVelocity() = Vec2(2, 2);
+			World::linkEntity(entity);
+		}
+	}
 }
 
 
@@ -763,8 +970,11 @@ Game::physics(
 		{
 			// We aren't making any progress.
 			Console::print(
-				_T("Infinite: f=%d e1=%d\n"),
+				_T("Infinite: f=%d tc=%.3f t=%.3f ct=%.3f e1=%d\n"),
 				Game::getFrame(),
+				fTimeCompleted,
+				collision.m_fTime,
+				kfCurrentTime,
 				entity.getIdentifier());
 			exit(1);
 		}

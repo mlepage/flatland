@@ -15,6 +15,9 @@ Screen::m_anCenterBuffer[m_nCenterBufferSize];
 CGapiSurface*
 Screen::m_pBackBuffer;
 
+CGapiBitmapFont*
+Screen::m_pSystemFont;
+
 
 /*******************************************************************************
 *******************************************************************************/
@@ -42,7 +45,10 @@ Screen::drawCenterText()
 		2,
 		312,
 		m_anCenterBuffer,
-		GDDRAWTEXT_LEFT,
+		Screen::getSystemFont(),
+		0,
+		NULL,
+		0,
 		NULL);
 }
 
@@ -60,7 +66,10 @@ Screen::drawConsole()
 			1,
 			2 + n * 6,
 			Console::getLine(Console::getDisplayLineIndex() - 7 + n),
-			GDDRAWTEXT_LEFT,
+			Screen::getSystemFont(),
+			0,
+			NULL,
+			0,
 			NULL);
 	}
 }
@@ -72,6 +81,15 @@ CGapiSurface*
 Screen::getBackBuffer()
 {
 	return m_pBackBuffer;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+CGapiBitmapFont*
+Screen::getSystemFont()
+{
+	return m_pSystemFont;
 }
 
 
@@ -111,6 +129,16 @@ Screen::setBackBuffer(
 	CGapiSurface* const kpBackBuffer)
 {
 	m_pBackBuffer = kpBackBuffer;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Screen::setSystemFont(
+	CGapiBitmapFont* const kpSystemFont)
+{
+	m_pSystemFont = kpSystemFont;
 }
 
 

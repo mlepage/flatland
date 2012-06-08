@@ -10,6 +10,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include "exception.h"
 #include "matrix.h"
 #include "world.h"
 
@@ -29,14 +30,88 @@
 
 /*******************************************************************************
 *******************************************************************************/
+int
+testExceptionHelper(
+	const int knThrow,
+	const int knCode)
+{
+	int nResult = 0;
+
+	TRY
+	{
+		nResult |= 1<<0;
+		if (knThrow == 1<<0) THROW(knCode);
+		TRY
+		{
+			nResult |= 1<<1;
+			if (knThrow == 1<<1) THROW(knCode);
+		}
+		CATCH (1)
+		{
+			nResult |= 1<<2;
+		}
+		CATCH (3)
+		{
+			nResult |= 1<<3;
+			RETHROW;
+		}
+		END_TRY_CATCH
+		nResult |= 1<<4;
+		if (knThrow == 1<<4) THROW(knCode);
+	}
+	CATCH (1)
+	{
+		nResult |= 1<<5;
+	}
+	CATCH (2)
+	{
+		nResult |= 1<<6;
+	}
+	CATCHALL
+	{
+		nResult |= 1<<7;
+	}
+	END_TRY_CATCHALL
+
+	return nResult;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
 void
 Test::test()
 {
+	testException();
 	testVec2();
 	testVec3();
 	testMat3();
 	testGeometry();
 	testWorld();
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+void
+Test::testException()
+{
+	CHECK(testExceptionHelper(0, 1) == (1<<0|1<<1|1<<4));
+
+	CHECK(testExceptionHelper(1<<0, 1) == (1<<0|1<<5));
+	CHECK(testExceptionHelper(1<<0, 2) == (1<<0|1<<6));
+	CHECK(testExceptionHelper(1<<0, 3) == (1<<0|1<<7));
+	CHECK(testExceptionHelper(1<<0, 4) == (1<<0|1<<7));
+
+	CHECK(testExceptionHelper(1<<1, 1) == (1<<0|1<<1|1<<2|1<<4));
+	CHECK(testExceptionHelper(1<<1, 2) == (1<<0|1<<1|1<<6));
+	CHECK(testExceptionHelper(1<<1, 3) == (1<<0|1<<1|1<<3|1<<7));
+	CHECK(testExceptionHelper(1<<1, 4) == (1<<0|1<<1|1<<7));
+
+	CHECK(testExceptionHelper(1<<4, 1) == (1<<0|1<<1|1<<4|1<<5));
+	CHECK(testExceptionHelper(1<<4, 2) == (1<<0|1<<1|1<<4|1<<6));
+	CHECK(testExceptionHelper(1<<4, 3) == (1<<0|1<<1|1<<4|1<<7));
+	CHECK(testExceptionHelper(1<<4, 4) == (1<<0|1<<1|1<<4|1<<7));
 }
 
 
