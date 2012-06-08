@@ -10,6 +10,7 @@
 #include "edit_line.h"
 #include "edit_point.h"
 #include "edit_polygon.h"
+#include "tstring.h"
 
 
 /*******************************************************************************
@@ -18,6 +19,8 @@ class EditModel
 {
 
 public:
+
+	EditModel();
 
 	void
 	addLine(
@@ -67,6 +70,15 @@ public:
 	getPolygon(
 		const int knIndex);
 
+	tstring
+	makeNewLineName();
+
+	tstring
+	makeNewPointName();
+
+	tstring
+	makeNewPolygonName();
+
 	void
 	setName(
 		const tstring& ksName);
@@ -78,18 +90,29 @@ private:
 	tstring m_sName;
 
 	Directory<EditLine> m_lineDirectory;
-
 	Directory<EditPoint> m_pointDirectory;
-
 	Directory<EditPolygon> m_polygonDirectory;
 
 	std::vector<EditLine*> m_cpLine;
-
 	std::vector<EditPoint*> m_cpPoint;
-
 	std::vector<EditPolygon*> m_cpPolygon;
 
+	int m_nLineNumber;
+	int m_nPointNumber;
+	int m_nPolygonNumber;
+
 };
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+EditModel::EditModel() :
+	m_nLineNumber(0),
+	m_nPointNumber(0),
+	m_nPolygonNumber(0)
+{
+}
 
 
 /*******************************************************************************
@@ -243,6 +266,42 @@ EditModel::getPolygon(
 	const int knIndex)
 {
 	return *m_cpPolygon[knIndex];
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+tstring
+EditModel::makeNewLineName()
+{
+	_TCHAR buffer[16];
+	_stprintf(buffer, _T("%d"), m_nLineNumber++);
+	return tstring(_T("_")) + tstring(buffer);
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+tstring
+EditModel::makeNewPointName()
+{
+	_TCHAR buffer[16];
+	_stprintf(buffer, _T("%d"), m_nPointNumber++);
+	return tstring(_T("_")) + tstring(buffer);
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+tstring
+EditModel::makeNewPolygonName()
+{
+	_TCHAR buffer[16];
+	_stprintf(buffer, _T("%d"), m_nPolygonNumber++);
+	return tstring(_T("_")) + tstring(buffer);
 }
 
 

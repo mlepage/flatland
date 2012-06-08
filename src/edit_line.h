@@ -7,10 +7,11 @@
 
 
 #include <vector>
+
+#include "edit_point.h"
 #include "tstring.h"
 
 
-class EditPoint;
 class EditPolygon;
 
 
@@ -52,9 +53,9 @@ private:
 	// The name.
 	tstring m_sName;
 
-	EditPoint* m_beginPoint;
+	EditPoint* m_pBeginPoint;
 
-	EditPoint* m_endPoint;
+	EditPoint* m_pEndPoint;
 
 	std::vector<EditPolygon*> m_cpPolygon;
 
@@ -80,7 +81,7 @@ inline
 EditPoint&
 EditLine::getBeginPoint()
 {
-	return *m_beginPoint;
+	return *m_pBeginPoint;
 }
 
 
@@ -90,7 +91,7 @@ inline
 EditPoint&
 EditLine::getEndPoint()
 {
-	return *m_endPoint;
+	return *m_pEndPoint;
 }
 
 
@@ -111,7 +112,11 @@ void
 EditLine::setBeginPoint(
 	EditPoint& beginPoint)
 {
-	m_beginPoint = &beginPoint;
+	// TODO remove old point
+
+	m_pBeginPoint = &beginPoint;
+
+	beginPoint.addLine(*this);
 }
 
 
@@ -122,7 +127,11 @@ void
 EditLine::setEndPoint(
 	EditPoint& endPoint)
 {
-	m_endPoint = &endPoint;
+	// TODO remove old point
+
+	m_pEndPoint = &endPoint;
+
+	endPoint.addLine(*this);
 }
 
 

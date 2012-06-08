@@ -7,10 +7,9 @@
 
 
 #include <vector>
+
+#include "edit_line.h"
 #include "tstring.h"
-
-
-class EditLine;
 
 
 /*******************************************************************************
@@ -58,6 +57,8 @@ EditPolygon::addLine(
 	EditLine& line)
 {
 	m_cpLine.push_back(&line);
+
+	line.addPolygon(*this);
 }
 
 

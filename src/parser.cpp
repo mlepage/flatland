@@ -391,8 +391,6 @@ Parser::parseEditLine(
 	// Hook everything up.
 	editLine.setBeginPoint(*pBeginPoint);
 	editLine.setEndPoint(*pEndPoint);
-	pBeginPoint->addLine(editLine);
-	pEndPoint->addLine(editLine);
 	editModel.addLine(editLine);
 
 	getLine();
@@ -449,7 +447,6 @@ Parser::parseEditModel(
 				THROW(Exception::Parse);
 			}
 			editPolygon.addLine(*pEditLine);
-			pEditLine->addPolygon(editPolygon);
 		}
 		matchLine(_T("}"));
 		editModel.addPolygon(editPolygon);

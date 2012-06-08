@@ -7,6 +7,7 @@
 
 
 class ApplicationState;
+class WidgetFileDialog;
 
 
 /*******************************************************************************
@@ -36,15 +37,31 @@ public:
 	getDisplay();
 
 	static
+	WidgetFileDialog&
+	getFileDialog()
+	{
+		return *m_pFileDialog;
+	}
+
+	static
 	HRESULT
 	initAndRun(
 		HINSTANCE hInstance);
+
+	static
+	bool
+	isScrollViewEnabled();
 
 	// TODO This needs a proper home. Refactor first.
 	static
 	void
 	setActiveEntity(
 		const Vec2& kvPoint);
+
+	static
+	void
+	setScrollViewEnabled(
+		const bool kb);
 
 	// TODO Perhaps this should be obfuscated? Maybe it doesn't matter since
 	// I don't believe it can be obfuscated in the base class.
@@ -101,6 +118,9 @@ private:
 
 	static int m_nFrameNumber;
 
+	static bool m_bScrollViewEnabled;
+
+	static WidgetFileDialog* m_pFileDialog;
 
 };
 
@@ -241,10 +261,31 @@ Application::getDisplay()
 *******************************************************************************/
 inline
 bool
+Application::isScrollViewEnabled()
+{
+	return m_bScrollViewEnabled;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+bool
 Application::isState(
 	ApplicationState& state)
 {
 	return m_pApplicationState == &state;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+void
+Application::setScrollViewEnabled(
+	const bool kb)
+{
+	m_bScrollViewEnabled = kb;
 }
 
 

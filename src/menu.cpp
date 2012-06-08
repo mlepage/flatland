@@ -11,6 +11,7 @@
 #include "state_editor.h"
 #include "state_nag.h"
 #include "state_title.h"
+#include "widget_file_dialog.h" // for showing file dialog
 
 
 #define DEF_VAR(name) Menu Menu::name(_T(#name))
@@ -29,6 +30,34 @@ Menu::m_nCurrentItem = -1;
 
 namespace
 {
+
+
+struct CompileModelCommand : public Command, sigslot::has_slots<>
+{
+	void
+	accepted()
+	{
+		disconnect_all();
+		StateEditor::compileModel(
+			Application::getFileDialog().getSelectedFileName());
+	}	
+	void
+	cancelled()
+	{
+		disconnect_all();
+	}	
+	virtual
+	void
+	execute()
+	{
+		Application::getFileDialog().accepted.connect(this,
+			&CompileModelCommand::accepted);
+		Application::getFileDialog().cancelled.connect(this,
+			&CompileModelCommand::cancelled);
+		Application::getFileDialog().show();
+		Menu::clearCurrentMenu();
+	};
+} compileModelCommand;
 
 
 struct EditorCommand : public Command
@@ -225,6 +254,15 @@ Menu::init()
 			_T("save model"),
 			rBounds,
 			nullCommand);
+		Menu::editor.addItem(item);
+	}
+	{
+		rBounds.getMin()[1] += knHeight + knVSpace;
+		rBounds.getMax()[1] += knHeight + knVSpace;
+		Menu::Item item(
+			_T("compile model"),
+			rBounds,
+			compileModelCommand);
 		Menu::editor.addItem(item);
 	}
 	{

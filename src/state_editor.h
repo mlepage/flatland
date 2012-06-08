@@ -7,6 +7,7 @@
 
 
 #include "application.h"
+#include "tstring.h"
 
 
 /*******************************************************************************
@@ -20,6 +21,12 @@ public:
 	static
 	void
 	changeState();
+
+	// The name is the plain name without any path or extension.
+	static
+	void
+	compileModel(
+		const tstring& ksName);
 
 	static
 	bool

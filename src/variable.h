@@ -39,6 +39,8 @@ public:
 	DECL_VAR(render_brush_bounds);
 	DECL_VAR(render_brush_outline);
 	DECL_VAR(render_console);
+	DECL_VAR(render_editor_image);
+	DECL_VAR(render_editor_model);
 	DECL_VAR(render_entity_bounds);
 	DECL_VAR(render_entity_identifier);
 	DECL_VAR(render_entity_image);

@@ -10,6 +10,73 @@ Windows executables are provided for each milestone release. Instructions are in
 Release History
 ===============
 
+Milestone 7 - Oct 12, 2003
+--------------------------
+
+M7 is the "more editor and widget toolkit" milestone. The major user visible feature is a lot of work on the level editor. The major behind the scenes feature is the implementation of a custom widget toolkit.
+
+First, the widget toolkit. It is essentially a watered down clone of qt, with some fundamental differences. First, qt uses its own custom signals/slots implementation; I used the public domain sigslot library from http://sigslot.sourceforge.net/. Second, event processing for my dialogs is totally different. Finally, there are other little differences in the way processing is handled that are tailored to my environment.
+
+Right now my widget toolkit is neither broad nor deep. I obviously haven't implemented all widgets (breadth), and the ones I have implemented are missing some features (depth). I have only done as much as I need to for my game, and I have cut corners where feasible. That said, I find the toolkit to be more flexible and reusable than custom coding each window gadget individually.
+
+I have button widgets for push buttons and tool buttons. I have a line edit widget for text input. I have a keyboard widget which fires genuine key events. And I have a dialog widget for file selection.
+
+Currently, the only functionality using the widget toolkit is the save model dialog. I still have to change older functionality to use the widget toolkit.
+
+Now, the editor. It is now possible to create a model (but not level) specification using the editor. I'll provide a short tutorial after I describe the editor's operation and commands.
+
+The edited model consists of points, lines which join points, and polygons which are formed of lines. Right now there is no checking of this structure. A model will ultimately be compiled to a form which is just convex polygons of points. Right now there is no checking that polygons are convex. The edited model is distinct from a compiled model; they live in different files.
+
+The file names of the initial edit model and image are hardcoded. The image is "data/images/edit_model.png" (or .jpg) and the model is "data/edits/edit_model.txt". The edit model can be empty but must at contain at least what the default edit model contains (just open the file). There is also a non-empty sample edit model you can look at to see the file format.
+
+The model must cover the image. That is, the furthest points in each direction must match the four edges of the image. Currently, you'll have to do this manually. If you are off by a pixel or two, the image will not render exactly over top of the model during game play.
+
+The toolbar buttons are as follows:
+
+1) Select/move mode. In this mode, you can select points or lines (but not polygons). Just click close to a point or a line. Hold CTRL to multi-select (but it won't toggle selection as it should). There is a bug where you can multi-select points if only lines are selected. If you click where there is no point or line, you will deselect (unless you are holding CTRL). If you drag where there is no point or line, you will make a selection lasso. If you drag a point or line, it will move appropriately. However, if you have multiple lines selected, you will have to hold CTRL to drag them all (this is a bug, you don't have to hold CTRL to drag multiple points).
+
+2) Create new point mode. Whereever you mouse down, you will create a new point.
+
+3) Create new polygon mode. Wheever you mouse down, you will create a new polygon (actually a triangle).
+
+4) Create polygon from points command. This will create a polygon from the points you selected. It will use the points in the order you selected them (which may not be convex, just rearrange them afterward). It will reuse lines between the points if they exist.
+
+5) Create reverse polygon from points command. This is the most complex command in the editor, and is intended for making world models. It works on selected points, and I think it reuses existing lines, but it's intended for newly created points especially. The points must meet certain criteria (which aren't verified). Namely, there must be a top left and a bottom right point which define an imaginary rectangle around all the points; these points will be found if they exist in the selection. Next, each remaining selected point will be closest to one side of that rectangle (if it's closest to two sides, one will be picked); each side must have at least one such closest point. Finally, the points closest to a side must not loop back on themselves (actually it's probably OK but you won't get the results you intend). If all this works, then the rectangle will be filled in with polygons around the sides towards the remaining points, leaving the centre open. I guess you have to see it in action.
+
+6) Delete command. Not yet implemented.
+
+7) Split line command. Not yet implemented.
+
+8) Grid command. Not yet implemented.
+
+9) Toggle model display command. This toggles the model display on and off. Currently, user interaction continues if the display is off; this is a bug.
+
+10) Toggle image display command. This toggles the image display on, off, and transparent.
+
+Right now, the first three modal tool buttons do not indicate which mode you are currently in, so be sure to remember, and if in doubt click it again.
+
+You cannot save your edit model, but you can compile your edit model into a model via the menu. Just type the name (no extension) and it will be saved into the application's directory. Existing files will be silently overwritten! So if you type "my-model" then a file will be saved "my-model.txt". To give it a try, move this file to "data/models/my-model.txt", manually include it in a level, and set that level as first_level in the config file.
+
+Now, a short tutorial on making a simple world model. First, take out a sheet of paper, draw your world, and scan it in. Make it donut-shaped, rectangular on the outside, but wavy on the inside. Or just use the default image I have provided.
+
+Next, open the editor and verify that your image is present. Change to create new point mode, and create two new points at the top left and bottom right of the image. As explained earlier, these points should be *exactly* on the corners of the image, move them as close as you can to where they should be (in select/move mode, of course).
+
+Now, along the interior of your world image, create new points whereever you want a polygon point to appear, on the edge between the playing area and the inside of the walls. Put more points where there are more curves.
+
+Remember, you can place new points in this mode, but you cannot move them. Just place a bunch of points, then switch to select/move mode to finalize their position. Don't make too many extra points as you cannot delete them. (Just leave them off to the side if you do.)
+
+Once you are satisfied, change to select/move mode and select all points (but not any extra ones you accidentally made). Since there is no autoscroll, the easiest way to do this is to use the lasso and the CTRL key, manually scrolling in between selections. Be sure all points are selected.
+
+Now, the moment of truth. Click the create reverse polygon from points tool button. Your simple world model will be made. You can tweak it as you like before you compile it into a model.
+
+Once you have your model compiled, move its file into the models directory. Copy a level file to make a new one, and change it to use your world model and image. Make sure other level elements are in the right place for your new world model. Change the first_level config variable to your new level name, and you can try your new world model.
+
+Program controls remain:
+
+Menu: access with ESC, use with ARROWS/ENTER or mouse.
+Scrolling: use ARROWS; ENTER toggles autoscroll (in game).
+CTRL key: multiple selection in editor; toggle rendering in game.
+
 Milestone 6 - Sep 28, 2003
 --------------------------
 

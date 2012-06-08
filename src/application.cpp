@@ -8,7 +8,7 @@
 
 #include "application.h"
 
-// TODO Figure out what to do with resources.
+// TODO Figure out what to do with Windows resources.
 #include "resource.h"
 
 #include "console.h"
@@ -30,7 +30,33 @@
 #include "test.h"
 #include "variable.h"
 #include "view.h"
+#include "widget.h"
+#include "widget_file_dialog.h"
 #include "world.h"
+
+// TEST Testing a bunch of widget and signals/slots stuff.
+struct SlotTester : public sigslot::has_slots<>
+{
+	void in() {Console::print(_T("in: %s\n"), m_sName.c_str());};
+	void out() {Console::print(_T("out: %s\n"), m_sName.c_str());};
+	tstring m_sName;
+};
+struct Base : public sigslot::has_slots<>
+{
+	virtual ~Base() {};
+	virtual void slot1() {};
+	void slot2() {};
+	virtual void slot4() {};
+};
+struct DerivedA : public Base
+{
+	sigslot::signal0<> sig;
+};
+struct DerivedB : public Base
+{
+	virtual void slot1() {};
+	void slot3() {};
+};
 
 
 Application*
@@ -41,6 +67,12 @@ Application::m_pApplicationState;
 
 int
 Application::m_nFrameNumber = 0;
+
+bool
+Application::m_bScrollViewEnabled = false;
+
+WidgetFileDialog*
+Application::m_pFileDialog;
 
 
 // TODO This needs a proper home but refactor first.
@@ -162,6 +194,7 @@ Application::initAndRun(
 	Test::test();
 #endif
 
+
 	// Load and execute the config file here, for now.
 	doConfigFile();
 
@@ -184,8 +217,20 @@ Application::initAndRun(
 
 	Console::print(_T("Flatland initialized.\n"));
 
-	// TEMP
+	// TEMP Initial state change.
 	StateSplash::changeState();
+
+	// Create file dialog.
+	m_pFileDialog = new WidgetFileDialog();
+
+	// TEST Compilation of sigslot connections.
+	DerivedA derivedA;
+	DerivedB derivedB;
+	derivedA.sig.connect(&derivedB, &DerivedB::slot1);
+	//derivedA.sig.connect(&derivedB, &DerivedB::slot2);
+	derivedA.sig.connect(&derivedB, &DerivedB::slot3);
+	//derivedA.sig.connect(&derivedB, &DerivedB::slot4);
+	derivedB.slot2();
 
 	// Start main loop.
 	return m_pApplication->Run();
@@ -249,6 +294,8 @@ Application::CreateSurfaces(
 #endif
 	Screen::setBackBuffer(&m_backbuffer);
 
+	Widget::setBackBuffer(m_backbuffer);
+
 	return S_OK;
 }
 
@@ -267,6 +314,9 @@ Application::ProcessNextFrame(
 	{
 		Screen::drawMenu();
 	}
+
+	// Widget event dispatching.
+	Widget::dispatchEventPaint();
 
 	++m_nFrameNumber;
 
@@ -296,6 +346,13 @@ Application::KeyDown(
 	const int knControlKey = VK_CONTROL;
 	const int knMenuKey = VK_ESCAPE;
 #endif
+
+	// Widget event dispatching.
+	Widget::dispatchEventKeyPress(dwKey);
+	if (!Widget::isOtherEventDispatchingEnabled())
+	{
+		return S_OK;
+	}
 
 	if (dwKey == knControlKey)
 	{
@@ -418,6 +475,8 @@ Application::KeyDown(
 		Console::print(_T("Unknown key code: %d\n"), dwKey);
 	}
 
+	m_pApplicationState->keyDown(dwKey);
+	
 	return S_OK;
 }
 
@@ -438,6 +497,13 @@ Application::KeyUp(
 	const int knControlKey = VK_CONTROL;
 	const int knMenuKey = VK_ESCAPE;
 #endif
+
+	// Widget event dispatching.
+	Widget::dispatchEventKeyRelease(dwKey);
+	if (!Widget::isOtherEventDispatchingEnabled())
+	{
+		return S_OK;
+	}
 
 	if (dwKey == keylist.vkUp)
 	{
@@ -472,6 +538,8 @@ Application::KeyUp(
 		Key::keyUp(Key::m_knKeyStart);
 	}
 
+	m_pApplicationState->keyUp(dwKey);
+
 	return S_OK;
 }
 
@@ -482,6 +550,13 @@ HRESULT
 Application::StylusDblClk(
 	POINT p)
 {
+	// Widget event dispatching.
+	Widget::dispatchEventStylusDoubleClick(WPoint(p.x, p.y));
+	if (!Widget::isOtherEventDispatchingEnabled())
+	{
+		return S_OK;
+	}
+
 	const Vec2 kvScreenPoint(p.x, p.y);
 	Stylus::doubleClick(kvScreenPoint);
 
@@ -497,6 +572,13 @@ HRESULT
 Application::StylusDown(
 	POINT p)
 {
+	// Widget event dispatching.
+	Widget::dispatchEventStylusDown(WPoint(p.x, p.y));
+	if (!Widget::isOtherEventDispatchingEnabled())
+	{
+		return S_OK;
+	}
+
 	const Vec2 kvScreenPoint(p.x, p.y);
 	Stylus::down(kvScreenPoint);
 
@@ -523,6 +605,13 @@ HRESULT
 Application::StylusMove(
 	POINT p)
 {
+	// Widget event dispatching.
+	Widget::dispatchEventStylusMove(WPoint(p.x, p.y));
+	if (!Widget::isOtherEventDispatchingEnabled())
+	{
+		return S_OK;
+	}
+
 	const Vec2 kvScreenPoint(p.x, p.y);
 	Stylus::move(kvScreenPoint);
 
@@ -546,6 +635,13 @@ HRESULT
 Application::StylusUp(
 	POINT p)
 {
+	// Widget event dispatching.
+	Widget::dispatchEventStylusUp(WPoint(p.x, p.y));
+	if (!Widget::isOtherEventDispatchingEnabled())
+	{
+		return S_OK;
+	}
+
 	const Vec2 kvScreenPoint(p.x, p.y);
 	Stylus::up(kvScreenPoint);
 

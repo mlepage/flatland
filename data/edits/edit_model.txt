@@ -1,0 +1,9 @@
+edit_model
+{
+	edit_points
+	{
+	}
+	edit_lines
+	{
+	}
+}

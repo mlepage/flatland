@@ -20,6 +20,8 @@ Variable::m_variableDirectory;
 	DEF_VAR(render_brush_bounds, "0");
 	DEF_VAR(render_brush_outline, "0");
 	DEF_VAR(render_console, "0");
+	DEF_VAR(render_editor_image, "0.5");
+	DEF_VAR(render_editor_model, "1");
 	DEF_VAR(render_entity_bounds, "0");
 	DEF_VAR(render_entity_identifier, "0");
 	DEF_VAR(render_entity_image, "0");
@@ -43,6 +45,8 @@ Variable::init()
 	REG_VAR(render_brush_bounds);
 	REG_VAR(render_brush_outline);
 	REG_VAR(render_console);
+	REG_VAR(render_editor_image);
+	REG_VAR(render_editor_model);
 	REG_VAR(render_entity_bounds);
 	REG_VAR(render_entity_identifier);
 	REG_VAR(render_entity_image);

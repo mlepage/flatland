@@ -25,8 +25,15 @@ public:
 	addLine(
 		EditLine& line);
 
+	EditLine&
+	getLine(
+		const int knIndex);
+
 	const tstring&
 	getName() const;
+
+	int
+	getNumberOfLines() const;
 
 	const Vec2&
 	getPoint() const;
@@ -68,10 +75,31 @@ EditPoint::addLine(
 /*******************************************************************************
 *******************************************************************************/
 inline
+EditLine&
+EditPoint::getLine(
+	const int knIndex)
+{
+	return *m_cpLine[knIndex];
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
 const tstring&
 EditPoint::getName() const
 {
 	return m_sName;
+}
+
+
+/*******************************************************************************
+*******************************************************************************/
+inline
+int
+EditPoint::getNumberOfLines() const
+{
+	return m_cpLine.size();
 }
 
 

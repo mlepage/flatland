@@ -7,6 +7,7 @@
 
 #include "key.h"
 
+#include "application.h"
 #include "game.h"
 #include "menu.h"
 #include "view.h"
@@ -51,10 +52,10 @@ Key::keyUp(
 void
 Key::processCommands()
 {
-	if (Menu::hasCurrentMenu())
+	if (Application::isScrollViewEnabled())
 	{
 		// Right now this function only handles view scrolling, so exit if
-		// the menu is up. This should be refactored properly.
+		// otherwise. This all needs to be refactored.
 		return;
 	}
 
