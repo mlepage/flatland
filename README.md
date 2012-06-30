@@ -1,9 +1,13 @@
 Flatland
 ========
 
-A prototype for a physics-based game idea written by Marc Lepage in a few months in 2003. The idea was it might be fun to flick things around the screen (Pocket PC or Palm) like air hockey or shuffleboard or pinball. Sort of an Angry Birds before its time.
+A prototype for a physics-based game idea written by Marc Lepage in a few months in 2003. The idea was it might be fun to flick things around the screen (Pocket PC or Palm) as in air hockey or shuffleboard or pinball. Sort of like Angry Birds before its time.
 
 Because this was in the days before Box2D, development started out by writing a simple physics engine. Basically, this was like a 2D version of Quake, using polygonal brushes/models/entities, and parametric equation solving to compute collisions. Good times.
+
+Levels are loaded from a flexible file format, and have both a compiled representation (for gameplay) and an editable representation (for the editor). The general idea is to have 2D polygon geometry underneath, but skin it all with animated imagery.
+
+The widget toolkit is basically a highly simplified Qt.
 
 Windows executables are provided for each milestone release. Instructions are in the release notes below. Enjoy!
 
@@ -27,22 +31,22 @@ Two new menu options allow you to load an image in the model editor, and place i
 
 The toolbar has been streamlined to five buttons. The first two are the select/move mode and new point mode, as in M7. The next two create a polygon or an inverse polygon from existing points/lines, as in M7. The fifth button, delete, is new to M8. It deletes selected points, and also any lines/polygons using them. This can leave extra lines or points, which will be saved with the model, but omitted when compiling a "gameplay" model.
 
-Only points can be selected, but selection itself is greatly improved. Shift and control work as expected, whether on a single point or in a lasso.
+Only points can be selected, but selection itself is greatly improved. SHIFT and CTRL work as expected, whether on a single point or in a lasso.
 
 Program controls are currently:
 
-Menu: access with ESC, use with ARROWS/ENTER (some screens only) or mouse.
-Scrolling: use ARROWS; ENTER toggles autoscroll (in game).
-CTRL key: multiple selection in editor; toggle rendering in game.
-SHIFT key: multiple selection in editor.
-S key: save a screenshot.
+- Menu: access with ESC, use with ARROWS/ENTER (some screens only) or mouse
+- Scrolling: use ARROWS; ENTER toggles autoscroll (in game)
+- CTRL: multiple selection in editor; toggle rendering in game
+- SHIFT: multiple selection in editor
+- S: save a screenshot
 
 Milestone 7 - Oct 12, 2003
 --------------------------
 
 M7 is the "more editor and widget toolkit" milestone. The major user visible feature is a lot of work on the level editor. The major behind the scenes feature is the implementation of a custom widget toolkit.
 
-First, the widget toolkit. It is essentially a watered down clone of qt, with some fundamental differences. First, qt uses its own custom signals/slots implementation; I used the public domain sigslot library from http://sigslot.sourceforge.net/. Second, event processing for my dialogs is totally different. Finally, there are other little differences in the way processing is handled that are tailored to my environment.
+First, the widget toolkit. It is essentially a watered down clone of Qt, with some fundamental differences. First, Qt uses its own custom signals/slots implementation; I used the public domain sigslot library from http://sigslot.sourceforge.net/. Second, event processing for my dialogs is totally different. Finally, there are other little differences in the way processing is handled that are tailored to my environment.
 
 Right now my widget toolkit is neither broad nor deep. I obviously haven't implemented all widgets (breadth), and the ones I have implemented are missing some features (depth). I have only done as much as I need to for my game, and I have cut corners where feasible. That said, I find the toolkit to be more flexible and reusable than custom coding each window gadget individually.
 
@@ -60,25 +64,25 @@ The model must cover the image. That is, the furthest points in each direction m
 
 The toolbar buttons are as follows:
 
-1) Select/move mode. In this mode, you can select points or lines (but not polygons). Just click close to a point or a line. Hold CTRL to multi-select (but it won't toggle selection as it should). There is a bug where you can multi-select points if only lines are selected. If you click where there is no point or line, you will deselect (unless you are holding CTRL). If you drag where there is no point or line, you will make a selection lasso. If you drag a point or line, it will move appropriately. However, if you have multiple lines selected, you will have to hold CTRL to drag them all (this is a bug, you don't have to hold CTRL to drag multiple points).
+1. Select/move mode. In this mode, you can select points or lines (but not polygons). Just click close to a point or a line. Hold CTRL to multi-select (but it won't toggle selection as it should). There is a bug where you can multi-select points if only lines are selected. If you click where there is no point or line, you will deselect (unless you are holding CTRL). If you drag where there is no point or line, you will make a selection lasso. If you drag a point or line, it will move appropriately. However, if you have multiple lines selected, you will have to hold CTRL to drag them all (this is a bug, you don't have to hold CTRL to drag multiple points).
 
-2) Create new point mode. Whereever you mouse down, you will create a new point.
+2. Create new point mode. Whereever you mouse down, you will create a new point.
 
-3) Create new polygon mode. Wheever you mouse down, you will create a new polygon (actually a triangle).
+3. Create new polygon mode. Wheever you mouse down, you will create a new polygon (actually a triangle).
 
-4) Create polygon from points command. This will create a polygon from the points you selected. It will use the points in the order you selected them (which may not be convex, just rearrange them afterward). It will reuse lines between the points if they exist.
+4. Create polygon from points command. This will create a polygon from the points you selected. It will use the points in the order you selected them (which may not be convex, just rearrange them afterward). It will reuse lines between the points if they exist.
 
-5) Create reverse polygon from points command. This is the most complex command in the editor, and is intended for making world models. It works on selected points, and I think it reuses existing lines, but it's intended for newly created points especially. The points must meet certain criteria (which aren't verified). Namely, there must be a top left and a bottom right point which define an imaginary rectangle around all the points; these points will be found if they exist in the selection. Next, each remaining selected point will be closest to one side of that rectangle (if it's closest to two sides, one will be picked); each side must have at least one such closest point. Finally, the points closest to a side must not loop back on themselves (actually it's probably OK but you won't get the results you intend). If all this works, then the rectangle will be filled in with polygons around the sides towards the remaining points, leaving the centre open. I guess you have to see it in action.
+5. Create reverse polygon from points command. This is the most complex command in the editor, and is intended for making world models. It works on selected points, and I think it reuses existing lines, but it's intended for newly created points especially. The points must meet certain criteria (which aren't verified). Namely, there must be a top left and a bottom right point which define an imaginary rectangle around all the points; these points will be found if they exist in the selection. Next, each remaining selected point will be closest to one side of that rectangle (if it's closest to two sides, one will be picked); each side must have at least one such closest point. Finally, the points closest to a side must not loop back on themselves (actually it's probably OK but you won't get the results you intend). If all this works, then the rectangle will be filled in with polygons around the sides towards the remaining points, leaving the centre open. I guess you have to see it in action.
 
-6) Delete command. Not yet implemented.
+6. Delete command. Not yet implemented.
 
-7) Split line command. Not yet implemented.
+7. Split line command. Not yet implemented.
 
-8) Grid command. Not yet implemented.
+8. Grid command. Not yet implemented.
 
-9) Toggle model display command. This toggles the model display on and off. Currently, user interaction continues if the display is off; this is a bug.
+9. Toggle model display command. This toggles the model display on and off. Currently, user interaction continues if the display is off; this is a bug.
 
-10) Toggle image display command. This toggles the image display on, off, and transparent.
+10. Toggle image display command. This toggles the image display on, off, and transparent.
 
 Right now, the first three modal tool buttons do not indicate which mode you are currently in, so be sure to remember, and if in doubt click it again.
 
@@ -100,9 +104,9 @@ Once you have your model compiled, move its file into the models directory. Copy
 
 Program controls remain:
 
-Menu: access with ESC, use with ARROWS/ENTER or mouse.
-Scrolling: use ARROWS; ENTER toggles autoscroll (in game).
-CTRL key: multiple selection in editor; toggle rendering in game.
+- Menu: access with ESC, use with ARROWS/ENTER or mouse
+- Scrolling: use ARROWS; ENTER toggles autoscroll (in game)
+- CTRL: multiple selection in editor; toggle rendering in game
 
 Milestone 6 - Sep 28, 2003
 --------------------------
@@ -111,7 +115,7 @@ M6 is the "editor" milestone. The major feature is the beginning of a level edit
 
 The editor currently loads an image and a model from hardcoded file names. Currently, the model doesn't match the image. This isn't a problem, as eventually you'll be creating your own model to match your own image.
 
-In the editor, you can scroll the view or access the menu as normal. You can select and move either a point or a line. Holding down the control key will allow you to select more than one point or line.
+In the editor, you can scroll the view or access the menu as normal. You can select and move either a point or a line. Holding down the CTRL key will allow you to select more than one point or line.
 
 Support has been added for rotated entities. The entity can be rotated at any angle, and will render and bounce correctly. However, it won't change its angle due to physical interaction (i.e. no angular forces or impulses in the simulation).
 
@@ -121,11 +125,11 @@ Images can now be JPEG in addition to PNG.
 
 New config variables determine whether the console and frame info are displayed.
 
-Some of the controls have changed.
+Some of the controls have changed:
 
-Menu: access with ESC, use with ARROWS/ENTER or mouse.
-Scrolling: use ARROWS; ENTER toggles autoscroll (in game).
-CTRL key: multiple selection in editor; toggle rendering in game.
+- Menu: access with ESC, use with ARROWS/ENTER or mouse
+- Scrolling: use ARROWS; ENTER toggles autoscroll (in game)
+- CTRL: multiple selection in editor; toggle rendering in game
 
 Milestone 5 - Sep 24, 2003
 --------------------------
@@ -138,22 +142,22 @@ The "drill" entity was created by taking multiple photos of a rotating drill bit
 
 The program now goes from the splash screen to a title screen. When a game is started, it displays a loading screen, then runs the game. When the game is finished, it returns to the title screen. Upon quitting, it displays a nag screen (eventually only for unregistered copies).
 
-An onscreen menu is active on the title screen, and during game pause. It is drawn primitively in this release, but reacts properly to the keys and stylus. You can use the stylus, or the keys up, down, and enter. The game pause menu can also be dismissed by unpausing, of course.
+An onscreen menu is active on the title screen, and during game pause. It is drawn primitively in this release, but reacts properly to the keys and stylus. You can use the stylus, or the keys UP, DOWN, and ENTER. The game pause menu can also be dismissed by unpausing, of course.
 
 Currently, the only title screen menu items that work are "new game" and "quit". During game pause, all three menu items work: "resume game", "end game", and "quit".
 
-Autoscroll is now implemented. The enter key toggles autoscroll on and off. Scrolling manually with the arrow keys also has the effect of turning autoscroll off. The entity that will be autoscrolled is the last player entity you controlled.
+Autoscroll is now implemented. The ENTER key toggles autoscroll on and off. Scrolling manually with the ARROW keys also has the effect of turning autoscroll off. The entity that will be autoscrolled is the last player entity you controlled.
 
 A new entity type "force" has the ability to capture the player entity after a delay. When overlaid over a control entity, this makes game play much easier.
 
 The program controls are now as follows:
 
-- Stylus: Menu and game interaction.
-- Arrow keys: Menu interaction and game scrolling.
-- Enter key: Menu selection and autoscroll toggle.
-- 3 key: Toggle game pause (with menu).
-- 2 key: Single step a game frame.
-- 1 key: Toggle wireframe graphics.
+- STYLUS: Menu and game interaction
+- ARROWS: Menu interaction and game scrolling
+- ENTER: Menu selection and autoscroll toggle
+- 3: Toggle game pause (with menu)
+- 2: Single step a game frame
+- 1: Toggle wireframe graphics
 
 Milestone 4 - Sep 02, 2003
 --------------------------
@@ -171,12 +175,12 @@ The third milestone is the "gameplay" release.
 
 The first big enhancement is support for entity types. There are a few predefined entity types:
 
-world - this should be the first entity.
-monster - uncontrollable entities.
-player - controllable entities.
-control - a non-solid area for controlling player entities.
-block - these are destroyed when player entities hit them.
-path - these move around on a path.
+- world: this should be the first entity.
+- monster: uncontrollable entities.
+- player: controllable entities.
+- control: a non-solid area for controlling player entities.
+- block: these are destroyed when player entities hit them.
+- path: these move around on a path.
 
 The new "breakout-1" level illustrates all of these entity types except monster.
 
@@ -190,11 +194,11 @@ There have been some tweaks to the collision response, mostly because of the com
 
 The controls remain:
 
-stylus - control player entity in control area.
-arrows - scroll view.
-1 - pause/unpause.
-2 - single step frame.
-3 - exit.
+- STYLUS: control player entity in control area
+- ARROWS: scroll view
+- 1: pause/unpause
+- 2: single step frame
+- 3: exit
 
 Milestone 2 - Aug 23, 2003
 --------------------------
@@ -307,11 +311,19 @@ Models live in the models subdirectory. These are just text files like this (dat
 
 Brushes are convex polygons in counter-clockwise order. You can have as many as you want, but if they are for a world, they should obviously enclose the level. If they are for a moving object, they may not bounce entirely "correctly" if they have more than one brush.
 
-The model's brush vertices implicitly define a bounding box. For the doe model above, it's from <0,0> to <472,320>, but it need not start at <0,0>. Each model requires a corresponding image (even if you aren't rendering images) that is the same total size as the model's bounding box (this isn't currently checked though).
+The model's brush vertices implicitly define a bounding box. For the doe model above, it's from `<0,0>` to `<472,320>`, but it need not start at `<0,0>`. Each model requires a corresponding image (even if you aren't rendering images) that is the same total size as the model's bounding box (this isn't currently checked though).
 
 Images live in the images subdirectory, as PNG files. So you can see doe.png is size 472x320. (It's an image of Doe Library at a California university.)
 
-So there you have it. You can make your own models (spec + image), levels, specify which level to load, and adjust some rendering options. Key controls are as follows: 1 is pause/unpause, 2 is frame step, 3 is exit. The log might help if you have problems, otherwise let me know.
+So there you have it. You can make your own models (spec + image), levels, specify which level to load, and adjust some rendering options.
+
+Key controls are as follows:
+
+- 1: pause/unpause
+- 2: frame step
+- 3: exit
+
+The log might help if you have problems, otherwise let me know.
 
 Milestone 1 - Aug 01, 2003
 --------------------------
