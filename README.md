@@ -11,6 +11,11 @@ The widget toolkit is basically a highly simplified Qt.
 
 Windows executables are provided for each milestone release. Instructions are in the release notes below. Enjoy!
 
+![wireframe view][w] &nbsp; ![skinned view][s]
+
+[w]: screenshots/wireframe.png "Wireframe"
+[s]: screenshots/skinned.png "Skinned"
+
 Release History
 ===============
 
